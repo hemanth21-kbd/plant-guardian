@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+python-multipart
+sqlalchemy
+pydantic
+numpy
+pillow
+# torch  <-- Commented out to avoid massive download during initial setup, will add if needed or use mock
+# torchvision
+python-dotenv
+tensorflow

@@ -1,0 +1,21 @@
+{
+    "name": "Plant Fertilizer AI",
+    "short_name": "PlantAI",
+    "description": "AI-powered plant disease detection and fertilizer recommendations.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4ADE80",
+    "icons": [
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

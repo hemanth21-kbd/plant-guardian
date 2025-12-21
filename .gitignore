@@ -1,0 +1,17 @@
+
+# Ignore huge datasets
+datasets/
+models/
+
+# Ignore Python cache and env
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Ignore frontend build artifacts (already in frontend/.gitignore but good to be safe)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/android/
+frontend/ios/
