@@ -69,9 +69,9 @@ async def predict_disease(
         
         final_result = None
 
-        # Check for Unknown label or low confidence
-        if result["label"] == "Unknown":
-            print("Local model returned Unknown. Falling back to Gemini...")
+        # Check for Unknown label, low confidence, or Model Error (Cloud deployment)
+        if result["label"] == "Unknown" or result["label"].startswith("Error"):
+            print("Local model unavailable/uncertain. Falling back to Gemini...")
             gemini_result = gemini_client.analyze_plant_disease(temp_file)
             
             if gemini_result:
