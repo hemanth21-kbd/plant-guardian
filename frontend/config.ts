@@ -9,5 +9,6 @@
 // export const API_BASE_URL = 'http://10.128.123.244:8000';
 // export const API_BASE_URL = 'https://b2a179509fc4b1f8-152-57-0-80.serveousercontent.com';
 
-// Use Environment Variable for Cloud, fallback to Localhost for dev
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+// Use Environment Variable or Default to Cloud URL for Mobile App
+export const API_BASE_URL = 'https://plant-guardian.onrender.com';
+// export const API_BASE_URL = 'http://localhost:8000'; // Uncomment for local testing

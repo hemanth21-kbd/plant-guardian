@@ -19,7 +19,7 @@ def analyze_plant_disease(image_path):
         return None
 
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         # Load image
         with open(image_path, "rb") as f:
@@ -72,7 +72,7 @@ def ask_gemini(query):
         return "Error: API Key missing."
 
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         response = model.generate_content(query)
         return response.text
     except Exception as e:
@@ -87,7 +87,7 @@ def translate_text(text, target_language):
         return text
 
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
         Translate the VALUES in the following JSON to {target_language}.
         Do NOT translate the KEYS.

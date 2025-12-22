@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: 'export', // Commented out for Vercel deployment
+  output: 'export',
   images: {
     unoptimized: true,
   },
