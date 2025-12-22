@@ -1,64 +1,81 @@
-import google.generativeai as genai
 import os
+import requests
 import json
-from dotenv import load_dotenv
+import time
 
-load_dotenv()
-
-api_key = os.getenv("GOOGLE_API_KEY")
-if api_key:
-    genai.configure(api_key=api_key)
+API_KEY = os.getenv("GOOGLE_API_KEY")
 
 def analyze_plant_disease(image_path):
     """
-    Analyzes a plant image using Gemini Pro Vision to identify disease.
-    Returns a dictionary with label, confidence, and details.
+    Analyzes plant disease using Gemini 1.5 Flash via direct HTTP API.
     """
-    if not api_key:
+    if not API_KEY:
         print("Error: GOOGLE_API_KEY not found.")
         return None
 
+    # URL for Gemini 1.5 Flash
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+
     try:
-        model = genai.GenerativeModel('gemini-pro-vision')
-        
-        # Load image
+        # Read image
         with open(image_path, "rb") as f:
             image_data = f.read()
-            
-        image_parts = [
-            {
-                "mime_type": "image/jpeg", # Assuming jpeg/png, Gemini handles common formats
-                "data": image_data
-            }
-        ]
-
-        prompt = """
-        Analyze this plant image. Identify the plant name and any disease it might have.
-        If it's healthy, say so.
-        Provide the output strictly in this JSON format:
-        {
-            "plant_name": "Name of plant",
-            "disease_name": "Name of disease or 'Healthy'",
-            "confidence": 0.95,
-            "details": {
-                "description": "Brief description of the condition",
-                "treatment": "Recommended treatment (organic and chemical)",
-                "prevention": "Prevention tips"
+        
+        # Prepare JSON payload (using raw bytes is hard in JSON, so we use blob upload or inline base64? 
+        # Actually, simpler to use requests for inline data if small, or just text description if image fails.
+        # But wait, we need to send the image.
+        # The easiest standard way without library is sending "inlineData".
+        import base64
+        b64_image = base64.b64encode(image_data).decode("utf-8")
+        
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": "Analyze this plant image. Identify the plant name, disease name (or 'Healthy'), confidence level (0-1), and Provide details: description, prevention, treatment."},
+                    {"inline_data": {
+                        "mime_type": "image/jpeg",
+                        "data": b64_image
+                    }}
+                ]
+            }],
+            "generationConfig": {
+                "response_mime_type": "application/json",
+                "response_schema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "plant_name": {"type": "STRING"},
+                        "disease_name": {"type": "STRING"},
+                        "confidence": {"type": "NUMBER"},
+                        "details": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "description": {"type": "STRING"},
+                                "prevention": {"type": "STRING"},
+                                "treatment": {"type": "STRING"}
+                            }
+                        }
+                    }
+                }
             }
         }
-        Do not include markdown formatting like ```json. Just the raw JSON string.
-        """
 
-        response = model.generate_content([prompt, image_parts[0]])
+        # Send Request
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
         
-        # Clean response text (remove markdown if present)
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        if text.endswith("```"):
-            text = text[:-3]
+        if response.status_code != 200:
+            print(f"Gemini API Error: {response.text}")
+            return None
             
-        return json.loads(text)
+        result = response.json()
+        
+        # Parse result
+        try:
+            # "candidates" -> [0] -> "content" -> "parts" -> [0] -> "text"
+            text_response = result["candidates"][0]["content"]["parts"][0]["text"]
+            return json.loads(text_response)
+        except Exception as e:
+            print(f"Error parsing Gemini response: {e}")
+            return None
 
     except Exception as e:
         print(f"Gemini analysis failed: {e}")
@@ -66,48 +83,59 @@ def analyze_plant_disease(image_path):
 
 def ask_gemini(query):
     """
-    Asks Gemini a general gardening question.
+    Chat with Gemini using direct HTTP API.
     """
-    if not api_key:
+    if not API_KEY:
         return "Error: API Key missing."
 
-    try:
-        model = genai.GenerativeModel('gemini-pro')
-        response = model.generate_content(query)
-        return response.text
-    except Exception as e:
-        print(f"Gemini chat failed: {e}")
-        return "Sorry, I couldn't connect to Google right now."
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": query}]}]
+    }
 
-def translate_text(text, target_language):
+    try:
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+        
+        if response.status_code != 200:
+            return f"Error: {response.text}"
+
+        result = response.json()
+        return result["candidates"][0]["content"]["parts"][0]["text"]
+
+    except Exception as e:
+        return f"Gemini chat failed: {e}"
+
+def translate_text(text, target_language='ta'):
     """
-    Translates the values within a JSON string to the target language using Gemini.
+    Translates text using Gemini.
     """
-    if not api_key:
+    if not API_KEY:
         return text
 
+    prompt = f"""
+    Translate the VALUES in the following JSON to {target_language}.
+    Do NOT translate the KEYS.
+    Return ONLY legitimate JSON.
+    JSON:
+    {text}
+    """
+    
+    # Re-use ask_gemini logic but separate function for clarity
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
+    }
+
     try:
-        model = genai.GenerativeModel('gemini-pro')
-        prompt = f"""
-        Translate the VALUES in the following JSON to {target_language}.
-        Do NOT translate the KEYS.
-        Keep the JSON structure exactly the same.
-        
-        JSON:
-        {text}
-        
-        Return ONLY the raw JSON string, no markdown.
-        """
-        
-        response = model.generate_content(prompt)
-        
-        translated_text = response.text.strip()
-        if translated_text.startswith("```json"):
-            translated_text = translated_text[7:]
-        if translated_text.endswith("```"):
-            translated_text = translated_text[:-3]
-            
-        return translated_text.strip()
-    except Exception as e:
-        print(f"Translation failed: {e}")
+        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"})
+        if response.status_code == 200:
+            result = response.json()
+            # Clean up potential markdown formatting ```json ... ```
+            raw_text = result["candidates"][0]["content"]["parts"][0]["text"]
+            raw_text = raw_text.replace("```json", "").replace("```", "").strip()
+            return raw_text
+        return text
+    except:
         return text
