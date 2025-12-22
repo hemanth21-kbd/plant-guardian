@@ -14,7 +14,7 @@ def analyze_plant_disease(image_path):
         return None
 
     # URL for Gemini 1.5 Flash
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key={API_KEY}"
 
     try:
         # Read image
@@ -88,7 +88,7 @@ def ask_gemini(query):
     if not API_KEY:
         return "Error: API Key missing."
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
     
     payload = {
         "contents": [{"parts": [{"text": query}]}]
@@ -122,7 +122,7 @@ def translate_text(text, target_language='ta'):
     """
     
     # Re-use ask_gemini logic but separate function for clarity
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={API_KEY}"
     
     payload = {
         "contents": [{"parts": [{"text": prompt}]}]
