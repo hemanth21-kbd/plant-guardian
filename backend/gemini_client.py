@@ -4,6 +4,10 @@ import json
 import base64
 import mimetypes
 import time
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 API_KEY = os.getenv("GOOGLE_API_KEY")
 HF_API_KEY = os.getenv("HF_API_KEY") # Optional: Add if you have one
@@ -34,37 +38,45 @@ def analyze_plant_disease(image_path):
     print("All AI services failed. Returning Static Result.")
     return get_mock_result()
 
+import google.generativeai as genai
+
+# Configure Gemini
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+
 def try_google_gemini(image_path):
     if not API_KEY: return None
     
-    mime_type, _ = mimetypes.guess_type(image_path)
-    if not mime_type: mime_type = "image/jpeg"
-    
-    # Try the most stable model first
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    print(f"Using Google Gemini (Model: gemini-flash-latest) for {image_path}...")
     
     try:
-        with open(image_path, "rb") as f:
-            b64_image = base64.b64encode(f.read()).decode("utf-8")
-            
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": "Analyze this plant image. Return JSON with keys: plant_name, disease_name, confidence, details (description, prevention, treatment)."},
-                    {"inline_data": {"mime_type": mime_type, "data": b64_image}}
-                ]
-            }],
-            "generationConfig": {"response_mime_type": "application/json"}
-        }
-
-        response = requests.post(url, json=payload, headers={"Content-Type": "application/json"}, timeout=15)
+        # Prepare the model
+        model = genai.GenerativeModel('gemini-flash-latest')
         
-        if response.status_code == 200:
-            text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-            text = text.replace("```json", "").replace("```", "").strip()
-            return json.loads(text)
-        else:
-            print(f"Gemini Error: {response.status_code} {response.text}")
+        # Load image
+        with open(image_path, "rb") as f:
+            data = f.read()
+
+        # The SDK can accept bytes directly using a dictionary format or slightly inconsistent ways depending on version
+        # Safest is PIL or the dictionary format: {'mime_type': 'image/jpeg', 'data': bytes}
+        mime_type, _ = mimetypes.guess_type(image_path)
+        if not mime_type: mime_type = "image/jpeg"
+        
+        image_part = {"mime_type": mime_type, "data": data}
+        
+        prompt = "Analyze this plant image. Return JSON with keys: plant_name, disease_name, confidence, details (description, prevention, treatment)."
+        
+        # execution
+        response = model.generate_content(
+            [prompt, image_part],
+            generation_config={"response_mime_type": "application/json"}
+        )
+        
+        text = response.text
+        # Cleanup potential markdown wrappers just in case
+        text = text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
+            
     except Exception as e:
         print(f"Gemini Exception: {e}")
     
@@ -123,12 +135,13 @@ def get_mock_result():
 def ask_gemini(query):
     # Simple chat fallback
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    
     try:
-        res = requests.post(url, json={"contents": [{"parts": [{"text": query}]}]})
-        if res.status_code == 200:
-            return res.json()["candidates"][0]["content"]["parts"][0]["text"]
-    except:
+        model = genai.GenerativeModel('gemini-flash-latest')
+        response = model.generate_content(query)
+        return response.text
+    except Exception as e:
+        print(f"Chat Error: {e}")
         pass
     return "I am unable to connect to the brain right now. Please try again."
 
