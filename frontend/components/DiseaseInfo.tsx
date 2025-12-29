@@ -26,7 +26,7 @@ interface DiseaseInfoProps {
     result: PredictionResult;
 }
 
-import { useLanguage } from "../contexts/LanguageContext";
+
 
 const DiseaseInfo: React.FC<DiseaseInfoProps> = ({ result }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
