@@ -30,6 +30,7 @@ export default function Home() {
       const file = new File([blob], "capture.jpg", { type: "image/jpeg" });
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("language", language);
       const response = await axios.post(`${API_BASE_URL}/predict`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
