@@ -145,5 +145,15 @@ def ask_gemini(query):
         pass
     return "I am unable to connect to the brain right now. Please try again."
 
-def translate_text(text, target):
-    return text
+def translate_text(text, target_language):
+    if not API_KEY: return text
+    
+    try:
+        model = genai.GenerativeModel('gemini-flash-latest')
+        prompt = f"Translate the following JSON content to {target_language}. Return ONLY the JSON with translated values, keeping keys and structure exactly the same: {text}"
+        
+        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
+        return response.text.replace("```json", "").replace("```", "").strip()
+    except Exception as e:
+        print(f"Translation Error: {e}")
+        return text

@@ -1,0 +1,3 @@
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+[32mForwarding HTTP traffic from https://d2237a89afb436cb-152-57-132-112.serveousercontent.com
+[0mclient_loop: send disconnect: Connection reset
