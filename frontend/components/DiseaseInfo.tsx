@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 
 interface Treatment {
     type: string;
@@ -25,8 +26,38 @@ interface DiseaseInfoProps {
     result: PredictionResult;
 }
 
+import { useLanguage } from "../contexts/LanguageContext";
+
 const DiseaseInfo: React.FC<DiseaseInfoProps> = ({ result }) => {
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const { language } = useLanguage();
+
+    const getLocale = (langCode: string) => {
+        const localeMap: Record<string, string> = {
+            'en': 'en-US',
+            'hi': 'hi-IN',
+            'ta': 'ta-IN',
+            'te': 'te-IN',
+            'kn': 'kn-IN',
+            'ml': 'ml-IN',
+            'bn': 'bn-IN',
+            'gu': 'gu-IN',
+            'mr': 'mr-IN',
+            'pa': 'pa-IN',
+            'ur': 'ur-PK',
+            'es': 'es-ES',
+            'fr': 'fr-FR',
+            'de': 'de-DE',
+            'it': 'it-IT',
+            'pt': 'pt-PT',
+            'ru': 'ru-RU',
+            'Zh': 'zh-CN',
+            'ja': 'ja-JP',
+            'ko': 'ko-KR',
+            'ar': 'ar-SA'
+        };
+        return localeMap[langCode] || 'en-US';
+    };
 
     const handleSpeak = () => {
         if (isSpeaking) {
@@ -35,12 +66,20 @@ const DiseaseInfo: React.FC<DiseaseInfoProps> = ({ result }) => {
             return;
         }
 
-        const text = `The plant is ${result.plant_name}. Detected issue is ${result.disease_name}. 
-        Confidence is ${Math.round(result.confidence * 100)} percent.
-        ${result.details ? `Severity is ${result.details.severity}. Symptoms include: ${result.details.symptoms}. Recommended treatment: ${result.details.treatments.map(t => t.description).join('. ')}` : ''}`;
+        // Construct text to read - reusing the translated content in 'result'
+        const text = `${result.plant_name}. ${result.disease_name}. 
+        ${result.details ? `${result.details.severity}. ${result.details.symptoms}. ${result.details.treatments.map(t => t.description).join('. ')}` : ''}`;
 
         const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = getLocale(language);
+        utterance.rate = 0.9; // Slightly slower for better clarity
+
         utterance.onend = () => setIsSpeaking(false);
+        utterance.onerror = (e) => {
+            console.error("Speech error", e);
+            setIsSpeaking(false);
+        };
+
         setIsSpeaking(true);
         window.speechSynthesis.speak(utterance);
     };

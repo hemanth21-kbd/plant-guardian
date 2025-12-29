@@ -4,6 +4,7 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import AILogo from './icons/AILogo';
 import { API_BASE_URL } from '../config';
+import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 
 export default function GoogleAssist() {
     const [query, setQuery] = useState('');
@@ -67,10 +68,47 @@ export default function GoogleAssist() {
         }
     };
 
-    const startListening = () => {
+
+
+    const startListening = async () => {
+        // Try Capacitor Native Plugin first (for Android)
+        try {
+            const hasPermission = await SpeechRecognition.checkPermissions();
+            if (!hasPermission.speechRecognition) {
+                await SpeechRecognition.requestPermissions();
+            }
+
+            const { available } = await SpeechRecognition.available();
+            if (available) {
+                setIsListening(true);
+                SpeechRecognition.start({
+                    language: "en-US",
+                    maxResults: 1,
+                    prompt: "Speak now...",
+                    partialResults: true,
+                    popup: false,
+                });
+
+                SpeechRecognition.addListener('partialResults', (data: any) => {
+                    if (data.matches && data.matches.length > 0) {
+                        setQuery(data.matches[0]);
+                    }
+                });
+
+                // On Android, we might not get a clear 'end' event the same way, 
+                // but usually the listener or a final result handles it.
+                // For simplicity, we assume user stops speaking or hits the button to stop.
+
+                return;
+            }
+        } catch (e) {
+            console.log("Native Voice not available, falling back to Web API", e);
+        }
+
+        // Fallback to Web Speech API (for Desktop/Web)
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
+            const WindowSpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            const recognition = new WindowSpeechRecognition();
 
             recognition.onstart = () => setIsListening(true);
             recognition.onend = () => setIsListening(false);
