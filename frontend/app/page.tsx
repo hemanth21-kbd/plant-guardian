@@ -5,6 +5,7 @@ import ImageUpload from "@/components/ImageUpload";
 import DiseaseInfo from "@/components/DiseaseInfo";
 import GoogleAssist from "@/components/GoogleAssist";
 import AILogo from "@/components/icons/AILogo";
+import DashboardUI from "@/components/DashboardUI";
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
 
@@ -17,7 +18,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"camera" | "upload" | "google" | "garden">("camera");
+  const [activeTab, setActiveTab] = useState<"home" | "camera" | "upload" | "google" | "garden">("home");
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const handleCapture = async (imageSrc: string) => {
@@ -46,8 +47,30 @@ export default function Home() {
     }
   };
 
+  if (activeTab === "home") {
+    return (
+      <DashboardUI
+        activeTab="home"
+        onTabChange={(tab) => setActiveTab(tab)}
+        onCameraTrigger={() => setActiveTab("camera")}
+      />
+    );
+  }
+
   return (
     <main className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Back to Home Button */}
+      <div className="absolute top-4 left-4 z-50">
+        <button
+          onClick={() => setActiveTab("home")}
+          className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 text-white hover:bg-white/20 transition-all"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+        </button>
+      </div>
+
       {/* ... decorative ... */}
 
       <div className="max-w-4xl w-full relative z-10 space-y-8">
