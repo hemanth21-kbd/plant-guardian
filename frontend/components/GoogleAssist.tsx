@@ -138,8 +138,8 @@ export default function GoogleAssist() {
                         <AILogo className="w-10 h-10 text-white" />
                     </div>
                 </div>
-                <h2 className="text-2xl font-bold text-white">Google Gardening Assistant</h2>
-                <p className="text-slate-300">Ask any question about plants, fertilizers, or diseases.</p>
+                <h2 className="text-2xl font-bold text-slate-900">Google Gardening Assistant</h2>
+                <p className="text-slate-600">Ask any question about plants, fertilizers, or diseases.</p>
             </div>
 
             <form onSubmit={handleAsk} className="mb-8 relative z-10">
@@ -149,14 +149,14 @@ export default function GoogleAssist() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="e.g., How often should I water my tomatoes?"
-                        className="glass-input flex-1 p-4 rounded-xl text-white placeholder-slate-400 focus:ring-2 focus:ring-amber-500/50 transition-all"
+                        className="bg-white border border-slate-200 shadow-sm flex-1 p-4 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                     />
                     <button
                         type="button"
                         onClick={startListening}
-                        className={`px-4 py-4 rounded-xl font-semibold transition-all shadow-lg backdrop-blur-md ${isListening
-                            ? "bg-red-500/80 text-white animate-pulse border border-red-400/50"
-                            : "bg-white/10 text-slate-200 hover:bg-white/20 border border-white/10"
+                        className={`px-4 py-4 rounded-xl font-semibold transition-all shadow-sm ${isListening
+                            ? "bg-red-50 text-red-600 animate-pulse border border-red-200"
+                            : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
                             }`}
                         title="Voice Search"
                     >
@@ -173,12 +173,15 @@ export default function GoogleAssist() {
             </form>
 
             {answer && (
-                <div className="glass-panel border-l-4 border-l-amber-500 rounded-xl p-6 shadow-xl animate-fade-in">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 rounded-lg bg-amber-500/20 text-amber-300">
+                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-6 shadow-sm animate-fade-in relative overflow-hidden">
+                    {/* Decorative blobs */}
+                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-amber-200/40 rounded-full blur-2xl"></div>
+                    <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-orange-200/30 rounded-full blur-2xl"></div>
+                    <div className="relative z-10 flex items-start gap-4">
+                        <div className="p-2 rounded-lg bg-amber-100 text-amber-600 shadow-sm border border-amber-200/50">
                             <AILogo className="w-6 h-6" />
                         </div>
-                        <div className="prose prose-invert max-w-none text-slate-200 leading-relaxed">
+                        <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium">
                             <ReactMarkdown>{answer}</ReactMarkdown>
                         </div>
                     </div>
