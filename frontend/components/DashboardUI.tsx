@@ -189,24 +189,18 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                         {/* Hero Section - Diagnosis */}
                         <div className="mx-6 mt-4 flex flex-col items-center text-center relative">
 
-                            {/* Phone Illustration Mockup */}
-                            <div className="relative w-40 h-40 mb-4 animate-float">
+                            {/* App Icon Image Mockup */}
+                            <div className="relative w-48 h-48 mb-6 animate-float">
                                 {/* Background blobs */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-cyan-200/40 rounded-full blur-2xl"></div>
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-emerald-200/40 rounded-full blur-xl animate-pulse"></div>
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-emerald-200/60 rounded-full blur-2xl"></div>
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-green-300/40 rounded-full blur-xl animate-pulse"></div>
 
-                                {/* Phone SVG */}
-                                <svg viewBox="0 0 100 160" className="w-full h-full relative z-10 drop-shadow-xl" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="20" y="10" width="60" height="120" rx="8" fill="#1e293b" />
-                                    <rect x="23" y="13" width="54" height="114" rx="6" fill="#f8fafc" />
-                                    {/* Plant Icon on screen */}
-                                    <text x="50" y="70" textAnchor="middle" fontSize="30">🌿</text>
-                                    {/* Scan line */}
-                                    <line x1="25" y1="40" x2="75" y2="40" stroke="#10b981" strokeWidth="2" strokeDasharray="4 2">
-                                        <animate attributeName="y1" from="20" to="120" dur="2s" repeatCount="indefinite" />
-                                        <animate attributeName="y2" from="20" to="120" dur="2s" repeatCount="indefinite" />
-                                    </line>
-                                </svg>
+                                {/* The plant app image */}
+                                <img
+                                    src="/images/app-icon.svg"
+                                    alt="Plant Guardian App"
+                                    className="w-full h-full relative z-10 object-contain drop-shadow-2xl"
+                                />
                             </div>
 
                             <h2 className="text-xl font-bold text-slate-800 mb-6">See diagnosis</h2>
