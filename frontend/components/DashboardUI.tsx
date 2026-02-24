@@ -22,6 +22,7 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'language'>('main');
     const [locationStatus, setLocationStatus] = useState<'prompt' | 'loading' | 'granted' | 'denied'>('prompt');
+    const [weatherData, setWeatherData] = useState<any>(null);
 
     useEffect(() => {
         if (activeTab === 'home' && locationStatus === 'prompt') {
@@ -37,9 +38,16 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
 
         setLocationStatus('loading');
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                // Success: we have position.coords.latitude and position.coords.longitude
+            async (position) => {
                 setLocationStatus('granted');
+                try {
+                    const { latitude, longitude } = position.coords;
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto&forecast_days=1`);
+                    const data = await res.json();
+                    setWeatherData(data);
+                } catch (err) {
+                    console.error("Failed to fetch weather", err);
+                }
             },
             (error) => {
                 console.error("Location error:", error);
@@ -47,6 +55,19 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
             }
         );
     };
+
+    // Weather interpretation helper
+    const getWeatherDetails = (code: number) => {
+        if (code === undefined) return { label: 'Clear', icon: '☀️' };
+        if (code <= 3) return { label: 'Clear/Partly Cloudy', icon: '🌤️' };
+        if (code <= 48) return { label: 'Cloudy/Fog', icon: '☁️' };
+        if (code <= 67) return { label: 'Rain', icon: '🌧️' };
+        if (code <= 77) return { label: 'Snow', icon: '❄️' };
+        if (code <= 82) return { label: 'Showers', icon: '🌦️' };
+        return { label: 'Storm', icon: '⛈️' };
+    };
+
+    const todayStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
     // Default list if no user selection
     const displayPlants = userPlants.length > 0
@@ -220,12 +241,22 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
                                             </svg>
-                                            Today
+                                            {todayStr}
                                         </div>
                                         <div className="flex items-end gap-2">
-                                            <span className="text-4xl font-black text-slate-800">24°</span>
-                                            <span className="text-sm font-medium text-slate-500 mb-1">Clear</span>
+                                            <span className="text-4xl font-black text-slate-800">
+                                                {weatherData ? Math.round(weatherData.current.temperature_2m) : '--'}°
+                                            </span>
+                                            <span className="text-sm font-medium text-slate-500 mb-1">
+                                                {weatherData ? getWeatherDetails(weatherData.current.weather_code).label : 'Loading...'}
+                                            </span>
                                         </div>
+                                        {weatherData && (
+                                            <div className="text-xs text-sky-700 mt-2 font-medium flex gap-3">
+                                                <span>💧 {weatherData.current.relative_humidity_2m}%</span>
+                                                <span>🌬️ {Math.round(weatherData.current.wind_speed_10m)} km/h</span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="bg-white/60 rounded-2xl p-3 flex flex-col justify-center border border-white/80 shadow-sm backdrop-blur-sm relative overflow-hidden">
                                         {/* Highlight glow for spraying box */}
@@ -248,20 +279,40 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                 <div className="relative z-10 w-full pt-4 border-t border-sky-100/60">
                                     <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Hourly Forecast & Conditions</div>
                                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
-                                        {[
-                                            { time: '09:00', temp: '22°', icon: '🌤️', wind: '12 km/h' },
-                                            { time: '12:00', temp: '25°', icon: '☀️', wind: '15 km/h' },
-                                            { time: '15:00', temp: '26°', icon: '☀️', wind: '18 km/h' },
-                                            { time: '18:00', temp: '22°', icon: '🌤️', wind: '8 km/h', highlight: true },
-                                            { time: '21:00', temp: '19°', icon: '🌙', wind: '5 km/h' },
-                                        ].map((slot, i) => (
-                                            <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${slot.highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
-                                                <span className={`text-[10px] font-bold ${slot.highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{slot.time}</span>
-                                                <span className="text-xl my-1.5">{slot.icon}</span>
-                                                <span className="text-sm font-bold">{slot.temp}</span>
-                                                <span className={`text-[8px] font-medium mt-1 ${slot.highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{slot.wind}</span>
-                                            </div>
-                                        ))}
+                                        {weatherData && weatherData.hourly ? (
+                                            [9, 12, 15, 18, 21].map((hourIndex, i) => {
+                                                const temp = Math.round(weatherData.hourly.temperature_2m[hourIndex]);
+                                                const wind = Math.round(weatherData.hourly.wind_speed_10m[hourIndex]);
+                                                const code = weatherData.hourly.weather_code[hourIndex];
+                                                const { icon } = getWeatherDetails(code);
+                                                const timeLab = `${hourIndex}:00`;
+                                                const highlight = hourIndex === 18; // arbitrary highlight block for spray
+
+                                                return (
+                                                    <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
+                                                        <span className={`text-[10px] font-bold ${highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{timeLab}</span>
+                                                        <span className="text-xl my-1.5">{icon}</span>
+                                                        <span className="text-sm font-bold">{temp}°</span>
+                                                        <span className={`text-[8px] font-medium mt-1 ${highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{wind} km/h</span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            [
+                                                { time: '09:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '12:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '15:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '18:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: true },
+                                                { time: '21:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                            ].map((slot, i) => (
+                                                <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${slot.highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
+                                                    <span className={`text-[10px] font-bold ${slot.highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{slot.time}</span>
+                                                    <span className="text-xl my-1.5">{slot.icon}</span>
+                                                    <span className="text-sm font-bold">{slot.temp}</span>
+                                                    <span className={`text-[8px] font-medium mt-1 ${slot.highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{slot.wind}</span>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
