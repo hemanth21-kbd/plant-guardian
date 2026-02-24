@@ -3,30 +3,51 @@ import React, { useState } from 'react';
 
 // Mock list of fertilizer shops
 const NEARBY_SHOPS = [
-    { id: 1, name: "Kisan Krishi Kendra", distance: "1.2 km", status: "Open Now", closesAt: "8:00 PM", address: "Main Road, Agri Circle", query: "Kisan+Krishi+Kendra" },
-    { id: 2, name: "Green Earth Fertilizers", distance: "3.5 km", status: "Open Now", closesAt: "8:30 PM", address: "Near Old Bus Stand", query: "Fertilizer+Shop" },
-    { id: 3, name: "National Agro Agency", distance: "5.0 km", status: "Closed", closesAt: "Opens 8:00 AM", address: "APMC Market Yard", query: "Agro+Agency" },
+    {
+        id: 1, name: "Kisan Krishi Kendra", distance: "1.2 km", status: "Open Now", closesAt: "8:00 PM", address: "Main Road, Agri Circle", query: "Kisan+Krishi+Kendra",
+        image: "https://images.unsplash.com/photo-1595991209266-5ff5a3a2f1ab?auto=format&fit=crop&q=80&w=400&h=200",
+        available: [
+            { name: "Urea", image: "https://images.unsplash.com/photo-1588612502604-ee9c6fbda818?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "DAP", image: "https://images.unsplash.com/photo-1598282361664-88481ff23b36?auto=format&fit=crop&q=80&w=150&h=150" }
+        ]
+    },
+    {
+        id: 2, name: "Green Earth Fertilizers", distance: "3.5 km", status: "Open Now", closesAt: "8:30 PM", address: "Near Old Bus Stand", query: "Fertilizer+Shop",
+        image: "https://images.unsplash.com/photo-1602052733979-bfddb1473266?auto=format&fit=crop&q=80&w=400&h=200",
+        available: [
+            { name: "Vermicompost", image: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "NPK", image: "https://images.unsplash.com/photo-1588612502604-ee9c6fbda818?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "MOP", image: "https://images.unsplash.com/photo-1598282361664-88481ff23b36?auto=format&fit=crop&q=80&w=150&h=150" }
+        ]
+    },
+    {
+        id: 3, name: "National Agro Agency", distance: "5.0 km", status: "Closed", closesAt: "Opens 8:00 AM", address: "APMC Market Yard", query: "Agro+Agency",
+        image: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400&h=200",
+        available: [
+            { name: "Pesticides", image: "https://images.unsplash.com/photo-1584483766114-2cea6facdf57?auto=format&fit=crop&q=80&w=150&h=150" }
+        ]
+    }
 ];
 
 // Mock fertilizer and pesticide prices
 const FERTILIZER_PRICES = [
     {
         id: 1, category: "Urea & Nitrogen", items: [
-            { name: "Neem Coated Urea", brand: "IFFCO", weight: "45 kg bag", price: "₹266.50", trend: "stable", change: "0" },
-            { name: "Ammonium Sulphate", brand: "GSFC", weight: "50 kg bag", price: "₹950", trend: "up", change: "+₹15" },
+            { name: "Neem Coated Urea", brand: "IFFCO", weight: "45 kg bag", price: "₹266.50", trend: "stable", change: "0", image: "https://images.unsplash.com/photo-1588612502604-ee9c6fbda818?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "Ammonium Sulphate", brand: "GSFC", weight: "50 kg bag", price: "₹950", trend: "up", change: "+₹15", image: "https://images.unsplash.com/photo-1598282361664-88481ff23b36?auto=format&fit=crop&q=80&w=150&h=150" },
         ]
     },
     {
         id: 2, category: "Phosphorus & Potassium", items: [
-            { name: "DAP (Diammonium Phosphate)", brand: "IFFCO", weight: "50 kg bag", price: "₹1,350", trend: "stable", change: "0" },
-            { name: "MOP (Muriate of Potash)", brand: "IPL", weight: "50 kg bag", price: "₹1,700", trend: "down", change: "-₹20" },
-            { name: "NPK 12:32:16", brand: "Gromor", weight: "50 kg bag", price: "₹1,470", trend: "up", change: "+₹10" }
+            { name: "DAP (Diammonium Phosphate)", brand: "IFFCO", weight: "50 kg bag", price: "₹1,350", trend: "stable", change: "0", image: "https://images.unsplash.com/photo-1584483766114-2cea6facdf57?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "MOP (Muriate of Potash)", brand: "IPL", weight: "50 kg bag", price: "₹1,700", trend: "down", change: "-₹20", image: "https://images.unsplash.com/photo-1598282361664-88481ff23b36?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "NPK 12:32:16", brand: "Gromor", weight: "50 kg bag", price: "₹1,470", trend: "up", change: "+₹10", image: "https://images.unsplash.com/photo-1588612502604-ee9c6fbda818?auto=format&fit=crop&q=80&w=150&h=150" }
         ]
     },
     {
         id: 3, category: "Organic & Bio-Fertilizers", items: [
-            { name: "Vermicompost", brand: "Local", weight: "50 kg bag", price: "₹350", trend: "stable", change: "0" },
-            { name: "City Compost", brand: "EcoFert", weight: "50 kg bag", price: "₹250", trend: "stable", change: "0" }
+            { name: "Vermicompost", brand: "Local", weight: "50 kg bag", price: "₹350", trend: "stable", change: "0", image: "https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&q=80&w=150&h=150" },
+            { name: "City Compost", brand: "EcoFert", weight: "50 kg bag", price: "₹250", trend: "stable", change: "0", image: "https://images.unsplash.com/photo-1628113401768-1bccece2c53a?auto=format&fit=crop&q=80&w=150&h=150" }
         ]
     }
 ];
@@ -80,29 +101,51 @@ export default function Shops() {
 
                         <div className="space-y-3">
                             {NEARBY_SHOPS.map(shop => (
-                                <div key={shop.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3">
-                                    <div className="flex justify-between items-start">
-                                        <div className="pr-4">
-                                            <h4 className="font-bold text-slate-800 text-base">{shop.name}</h4>
-                                            <p className="text-xs text-slate-500 mt-1">{shop.address}</p>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            <div className="font-bold text-blue-600 text-sm">{shop.distance}</div>
+                                <div key={shop.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+                                    {/* Shop Image Header */}
+                                    <div className="h-32 w-full bg-slate-200 relative">
+                                        <img src={shop.image} alt={shop.name} className="w-full h-full object-cover" />
+                                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg">
+                                            <div className="font-bold text-white text-xs">{shop.distance}</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                                        <div className="flex items-center gap-1.5">
-                                            <div className={`w-2 h-2 rounded-full ${shop.status === 'Open Now' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                                            <span className={`text-xs font-bold ${shop.status === 'Open Now' ? 'text-emerald-700' : 'text-red-600'}`}>{shop.status}</span>
+                                    <div className="p-4 flex flex-col gap-3">
+                                        <div className="flex justify-between items-start">
+                                            <div className="pr-2">
+                                                <h4 className="font-bold text-slate-800 text-lg leading-tight">{shop.name}</h4>
+                                                <p className="text-xs text-slate-500 mt-0.5">{shop.address}</p>
+                                            </div>
                                         </div>
-                                        <span className="text-xs font-medium text-slate-500">[{shop.closesAt}]</span>
-                                        <button
-                                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.query}`, '_blank', 'noopener,noreferrer')}
-                                            className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg ml-auto transition-colors"
-                                        >
-                                            Directions
-                                        </button>
+
+                                        <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className={`w-2 h-2 rounded-full ${shop.status === 'Open Now' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
+                                                <span className={`text-xs font-bold ${shop.status === 'Open Now' ? 'text-emerald-700' : 'text-red-600'}`}>{shop.status}</span>
+                                            </div>
+                                            <span className="text-xs font-medium text-slate-500">[{shop.closesAt}]</span>
+                                            <button
+                                                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.query}`, '_blank', 'noopener,noreferrer')}
+                                                className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg ml-auto transition-colors shadow-sm"
+                                            >
+                                                Directions
+                                            </button>
+                                        </div>
+
+                                        {/* Available Fertilizers inside Shop */}
+                                        <div className="pt-2">
+                                            <span className="text-xs font-bold text-slate-600 mb-2 block">Available Stock:</span>
+                                            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                                                {shop.available.map((item, idx) => (
+                                                    <div key={idx} className="flex flex-col items-center gap-1 min-w-[60px]">
+                                                        <div className="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+                                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <span className="text-[10px] text-center font-semibold text-slate-600 leading-tight">{item.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -130,11 +173,14 @@ export default function Shops() {
                                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                                     {category.items.map((item, index) => (
                                         <div key={index} className="flex justify-between items-center p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                                            <div className="flex items-center gap-3 w-1/2">
+                                            <div className="flex items-center gap-3 w-3/5">
+                                                <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-100 shrink-0 shadow-sm">
+                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                </div>
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-800 text-sm whitespace-normal">{item.name}</span>
-                                                    <div className="flex gap-2 items-center mt-0.5">
-                                                        <span className="text-[10px] text-blue-600 font-bold bg-blue-50 px-1.5 py-0.5 rounded">{item.brand}</span>
+                                                    <span className="font-bold text-slate-800 text-sm whitespace-normal leading-tight">{item.name}</span>
+                                                    <div className="flex gap-2 items-center mt-1">
+                                                        <span className="text-[9px] text-blue-600 font-bold bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">{item.brand}</span>
                                                         <span className="text-[10px] text-slate-500 font-medium">{item.weight}</span>
                                                     </div>
                                                 </div>
