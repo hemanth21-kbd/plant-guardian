@@ -19,7 +19,8 @@ interface DashboardUIProps {
 
 export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, userPlants = [], children }: DashboardUIProps) {
     const { t, language, setLanguage } = useLanguage();
-    const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'language'>('main');
 
     // Default list if no user selection
     const displayPlants = userPlants.length > 0
@@ -51,38 +52,6 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="relative">
-                        <button
-                            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 hover:bg-slate-50 transition-colors text-xs font-medium text-slate-700 shadow-sm"
-                        >
-                            <span>🌐</span>
-                            <span>{languageOptions.find(l => l.code === language)?.name || 'English'}</span>
-                            <span className="text-[10px] opacity-70">▼</span>
-                        </button>
-
-                        {isLangMenuOpen && (
-                            <div className="absolute top-full right-0 mt-2 w-48 max-h-[300px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg custom-scrollbar z-50">
-                                <div className="p-1">
-                                    {languageOptions.map(lang => (
-                                        <button
-                                            key={lang.code}
-                                            onClick={() => {
-                                                setLanguage(lang.code as any);
-                                                setIsLangMenuOpen(false);
-                                            }}
-                                            className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2 ${language === lang.code ? 'text-blue-600 bg-blue-50 font-bold' : 'text-slate-700'
-                                                }`}
-                                        >
-                                            <span className="text-base">{lang.flag}</span>
-                                            <span>{lang.name}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
                     <button
                         onClick={() => onTabChange('google')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors font-medium text-sm shadow-sm ${activeTab === 'google' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
@@ -95,6 +64,86 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                         </svg>
                     </button>
+
+                    {/* Three Dots Menu */}
+                    <div className="relative">
+                        <button
+                            onClick={() => {
+                                if (!isMenuOpen) setActiveSubmenu('main');
+                                setIsMenuOpen(!isMenuOpen);
+                            }}
+                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z" />
+                            </svg>
+                        </button>
+
+                        {isMenuOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                                {activeSubmenu === 'main' ? (
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => setActiveSubmenu('language')}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors rounded-lg flex items-center justify-between text-slate-700"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span>🌐</span>
+                                                <span>Language</span>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400">▶</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                alert("Help feature coming soon!");
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2 text-slate-700"
+                                        >
+                                            <span>❓</span>
+                                            <span>Help</span>
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                alert("Feedback feature coming soon!");
+                                                setIsMenuOpen(false);
+                                            }}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2 text-slate-700"
+                                        >
+                                            <span>💬</span>
+                                            <span>Feedback</span>
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="p-1">
+                                        <button
+                                            onClick={() => setActiveSubmenu('main')}
+                                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2 text-slate-500 font-medium mb-1 border-b border-slate-100 pb-2"
+                                        >
+                                            <span>◀</span>
+                                            <span>Back</span>
+                                        </button>
+                                        <div className="max-h-[250px] overflow-y-auto custom-scrollbar pt-1">
+                                            {languageOptions.map(lang => (
+                                                <button
+                                                    key={lang.code}
+                                                    onClick={() => {
+                                                        setLanguage(lang.code as any);
+                                                        setIsMenuOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors rounded-lg flex items-center gap-2 ${language === lang.code ? 'text-blue-600 bg-blue-50 font-bold' : 'text-slate-700'
+                                                        }`}
+                                                >
+                                                    <span className="text-base">{lang.flag}</span>
+                                                    <span>{lang.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
