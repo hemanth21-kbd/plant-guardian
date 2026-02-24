@@ -7,7 +7,7 @@ import ImageUpload from '@/components/ImageUpload';
 import GoogleAssist from '@/components/GoogleAssist';
 import Garden from '@/components/Garden';
 import { languageOptions } from '@/utils/translations';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface DashboardUIProps {
     onTabChange: (tab: "home" | "camera" | "upload" | "google" | "garden" | "community") => void;
@@ -21,6 +21,32 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
     const { t, language, setLanguage } = useLanguage();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [activeSubmenu, setActiveSubmenu] = useState<'main' | 'language'>('main');
+    const [locationStatus, setLocationStatus] = useState<'prompt' | 'loading' | 'granted' | 'denied'>('prompt');
+
+    useEffect(() => {
+        if (activeTab === 'home' && locationStatus === 'prompt') {
+            requestLocation();
+        }
+    }, [activeTab]);
+
+    const requestLocation = () => {
+        if (!navigator.geolocation) {
+            setLocationStatus('denied');
+            return;
+        }
+
+        setLocationStatus('loading');
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                // Success: we have position.coords.latitude and position.coords.longitude
+                setLocationStatus('granted');
+            },
+            (error) => {
+                console.error("Location error:", error);
+                setLocationStatus('denied');
+            }
+        );
+    };
 
     // Default list if no user selection
     const displayPlants = userPlants.length > 0
@@ -242,21 +268,32 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                         </div>
 
                         {/* Location Permission */}
-                        <div className="mx-6 p-4 bg-sky-50 border border-sky-100 rounded-xl flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                                        <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.625a19.08 19.08 0 002.274 1.765c.311.192.571.337.757.433.092.047.186.095.281.14l.018.008.006.003h.002zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                                    </svg>
+                        {locationStatus !== 'granted' && (
+                            <div className="mx-6 p-4 bg-sky-50 border border-sky-100 rounded-xl flex items-center justify-between transition-all animate-fade-in">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600">
+                                        {locationStatus === 'loading' ? (
+                                            <div className="w-4 h-4 border-2 border-sky-400 border-t-sky-600 rounded-full animate-spin"></div>
+                                        ) : (
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                                                <path fillRule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 103 9c0 3.492 1.698 5.988 3.355 7.625a19.08 19.08 0 002.274 1.765c.311.192.571.337.757.433.092.047.186.095.281.14l.018.008.006.003h.002zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                            </svg>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-slate-600 leading-tight">
+                                        {locationStatus === 'loading' ? "Detecting location..." : locationStatus === 'denied' ? "Location access denied" : "Allow location access to see weather info"}
+                                    </div>
                                 </div>
-                                <div className="text-xs text-slate-600 leading-tight">
-                                    Allow location access to see weather info
-                                </div>
+                                {locationStatus !== 'loading' && (
+                                    <button
+                                        onClick={requestLocation}
+                                        className="text-sm font-bold text-blue-600 px-3 py-1 hover:bg-blue-50 rounded-lg"
+                                    >
+                                        {locationStatus === 'denied' ? "Retry" : "Allow"}
+                                    </button>
+                                )}
                             </div>
-                            <button className="text-sm font-bold text-blue-600 px-3 py-1 hover:bg-blue-50 rounded-lg">
-                                Allow
-                            </button>
-                        </div>
+                        )}
 
                         {/* Hero Section - Diagnosis */}
                         <div className="mx-6 mt-4 flex flex-col items-center text-center relative">
