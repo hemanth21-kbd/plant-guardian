@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 
 // Mock list of nearby markets
 const NEARBY_MARKETS = [
-    { id: 1, name: "Central APMC Market", distance: "2.4 km", status: "Open Now", closesAt: "9:00 PM", type: "Wholesale" },
-    { id: 2, name: "Green Valley Farmers Market", distance: "4.1 km", status: "Open Now", closesAt: "7:00 PM", type: "Retail & Wholesale" },
-    { id: 3, name: "City Center Agro Hub", distance: "7.8 km", status: "Closed", closesAt: "Opens 5:00 AM", type: "Wholesale" },
+    { id: 1, name: "Central APMC Market", distance: "2.4 km", status: "Open Now", closesAt: "9:00 PM", type: "Wholesale", query: "Central+APMC+Market" },
+    { id: 2, name: "Green Valley Farmers Market", distance: "4.1 km", status: "Open Now", closesAt: "7:00 PM", type: "Retail & Wholesale", query: "Farmers+Market" },
+    { id: 3, name: "City Center Agro Hub", distance: "7.8 km", status: "Closed", closesAt: "Opens 5:00 AM", type: "Wholesale", query: "APMC+Market" },
 ];
 
 // Mock daily prices
@@ -103,7 +103,10 @@ export default function Market() {
                                             <span className={`text-xs font-bold ${market.status === 'Open Now' ? 'text-emerald-700' : 'text-red-600'}`}>{market.status}</span>
                                         </div>
                                         <span className="text-xs font-medium text-slate-500">[{market.closesAt}]</span>
-                                        <button className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg ml-auto transition-colors">
+                                        <button
+                                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${market.query}`, '_blank', 'noopener,noreferrer')}
+                                            className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg ml-auto transition-colors"
+                                        >
                                             Directions
                                         </button>
                                     </div>
