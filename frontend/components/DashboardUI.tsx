@@ -181,38 +181,61 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                             </div>
                         </div>
 
-                        {/* Weather/Info Widgets */}
-                        <div className="px-6 flex gap-4 overflow-x-auto pb-2">
-                            {/* Weather Card */}
-                            <div className="min-w-[160px] bg-[#ffe4c4]/30 border border-orange-200 rounded-2xl p-4 flex flex-col justify-between h-28 relative overflow-hidden">
-                                <div className="flex justify-between items-start z-10">
-                                    <div className="text-xs font-medium text-amber-800 flex items-center gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                        </svg>
-                                        16 Feb
-                                    </div>
-                                    <span className="text-2xl">☁️</span>
-                                </div>
-                                <div className="z-10">
-                                    <div className="text-2xl font-bold text-slate-800">24°C</div>
-                                </div>
-                                {/* Decorative blob */}
-                                <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-orange-200 rounded-full blur-xl opacity-50"></div>
-                            </div>
+                        {/* Advanced Weather & Spraying Widget */}
+                        <div className="px-6 pb-2 mt-2">
+                            <div className="bg-gradient-to-br from-sky-50 to-blue-50 border border-sky-100 rounded-3xl p-5 shadow-sm relative overflow-hidden">
+                                {/* Decorative background elements */}
+                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full blur-3xl opacity-40"></div>
+                                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-50"></div>
 
-                            {/* Spraying Conditions Card */}
-                            <div className="min-w-[200px] flex-1 bg-[#ffedd5]/40 border border-orange-200 rounded-2xl p-4 h-28 relative overflow-hidden">
-                                <div className="flex justify-between items-start z-10 mb-1">
-                                    <div className="text-xs font-medium text-amber-800 flex items-center gap-1">
-                                        <span className="line-through opacity-50">Sprayer</span> Spraying conditions
+                                <div className="relative z-10 grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <div className="text-xs font-bold text-sky-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                            Today
+                                        </div>
+                                        <div className="flex items-end gap-2">
+                                            <span className="text-4xl font-black text-slate-800">24°</span>
+                                            <span className="text-sm font-medium text-slate-500 mb-1">Clear</span>
+                                        </div>
                                     </div>
-                                    <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-2 py-0.5 rounded-full">until 9 pm</span>
+                                    <div className="bg-white/60 rounded-2xl p-3 flex flex-col justify-center border border-white/80 shadow-sm backdrop-blur-sm relative overflow-hidden">
+                                        {/* Highlight glow for spraying box */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/50 to-transparent"></div>
+                                        <div className="relative z-10">
+                                            <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                <span>🧪</span> Spray Fertilizer
+                                            </div>
+                                            <div className="font-bold text-emerald-900 leading-tight">
+                                                4:00 PM - 6:00 PM
+                                            </div>
+                                            <div className="text-[10px] text-emerald-700 mt-0.5">
+                                                Low wind, optimal temp
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="z-10">
-                                    <div className="text-lg font-bold text-amber-900 mt-1">Moderate</div>
-                                    <div className="w-full bg-white/50 h-1.5 mt-3 rounded-full overflow-hidden">
-                                        <div className="h-full bg-amber-400 w-3/5 rounded-full"></div>
+
+                                {/* Full day temperature timeline */}
+                                <div className="relative z-10 w-full pt-4 border-t border-sky-100/60">
+                                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-3">Hourly Forecast & Conditions</div>
+                                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 snap-x">
+                                        {[
+                                            { time: '09:00', temp: '22°', icon: '🌤️', wind: '12 km/h' },
+                                            { time: '12:00', temp: '25°', icon: '☀️', wind: '15 km/h' },
+                                            { time: '15:00', temp: '26°', icon: '☀️', wind: '18 km/h' },
+                                            { time: '18:00', temp: '22°', icon: '🌤️', wind: '8 km/h', highlight: true },
+                                            { time: '21:00', temp: '19°', icon: '🌙', wind: '5 km/h' },
+                                        ].map((slot, i) => (
+                                            <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${slot.highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
+                                                <span className={`text-[10px] font-bold ${slot.highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{slot.time}</span>
+                                                <span className="text-xl my-1.5">{slot.icon}</span>
+                                                <span className="text-sm font-bold">{slot.temp}</span>
+                                                <span className={`text-[8px] font-medium mt-1 ${slot.highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{slot.wind}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
