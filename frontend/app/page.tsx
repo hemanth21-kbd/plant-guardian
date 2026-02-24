@@ -14,6 +14,7 @@ import { API_BASE_URL } from "@/config";
 import Garden from "@/components/Garden";
 import Community from "@/components/Community";
 import Market from "@/components/Market";
+import Shops from "@/components/Shops";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageOptions } from "@/utils/translations";
 
@@ -30,7 +31,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"home" | "camera" | "upload" | "google" | "garden" | "community" | "market">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "camera" | "upload" | "google" | "garden" | "community" | "market" | "shops">("home");
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -147,6 +148,8 @@ export default function Home() {
     tabContent = <Community />;
   } else if (activeTab === "market") {
     tabContent = <Market />;
+  } else if (activeTab === "shops") {
+    tabContent = <Shops />;
   }
 
   return (
