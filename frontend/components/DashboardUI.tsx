@@ -10,7 +10,7 @@ import { languageOptions } from '@/utils/translations';
 import { useState, useEffect } from 'react';
 
 interface DashboardUIProps {
-    onTabChange: (tab: "home" | "camera" | "upload" | "google" | "garden" | "community" | "market" | "shops") => void;
+    onTabChange: (tab: "home" | "camera" | "upload" | "google" | "garden" | "community" | "market" | "shops" | "profile") => void;
     onCameraTrigger: () => void;
     activeTab: string;
     userPlants?: string[];
@@ -421,6 +421,12 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                         {children}
                     </div>
                 )}
+
+                {activeTab === 'profile' && (
+                    <div className="pb-20 h-full">
+                        {children}
+                    </div>
+                )}
             </div>
 
             {/* Bottom Navigation */}
@@ -474,11 +480,11 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                 </button>
 
                 <button
-                    onClick={() => { }}
-                    className="flex flex-col items-center gap-1 text-slate-400"
+                    onClick={() => onTabChange('profile')}
+                    className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'profile' ? 'text-blue-600' : 'text-slate-400'}`}
                 >
-                    <div className="w-6 h-6 rounded-full bg-slate-200 border border-slate-300 flex items-center justify-center overflow-hidden">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-full h-full text-slate-400 translate-y-1">
+                    <div className={`w-6 h-6 rounded-full border flex items-center justify-center overflow-hidden ${activeTab === 'profile' ? 'border-blue-500 bg-blue-100' : 'bg-slate-200 border-slate-300'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-full h-full translate-y-1 ${activeTab === 'profile' ? 'text-blue-500' : 'text-slate-400'}`}>
                             <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
                         </svg>
                     </div>
