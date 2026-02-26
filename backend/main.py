@@ -8,6 +8,8 @@ import uvicorn
 import shutil
 import os
 import hashlib
+import time
+import random
 
 from . import models, schemas, database, ml_engine, gemini_client
 
@@ -155,12 +157,18 @@ async def predict_disease(
 # User Auth Routes
 @app.post("/auth/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    if user.email:
+        db_user = db.query(models.User).filter(models.User.email == user.email).first()
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+            
+    if user.phone_number:
+        db_phone = db.query(models.User).filter(models.User.phone_number == user.phone_number).first()
+        if db_phone:
+            raise HTTPException(status_code=400, detail="Phone number already registered")
     
     hashed_password = hashlib.sha256(user.password.encode()).hexdigest()
-    new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password)
+    new_user = models.User(username=user.username, email=user.email, phone_number=user.phone_number, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -178,6 +186,44 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     
     return {"message": "Login successful", "user_id": db_user.id, "username": db_user.username}
+
+OTP_STORE = {}
+
+@app.post("/auth/request-otp")
+def request_otp(data: schemas.OTPRequest):
+    code = f"{random.randint(100000, 999999)}"
+    OTP_STORE[data.identifier] = {"code": code, "expires": time.time() + 300} # 5 mins
+    print(f"\n{'='*40}\n[TEST OTP] Identifier: {data.identifier} | Code: {code}\n{'='*40}\n")
+    return {"message": "OTP sent successfully! (Check console for code)"}
+
+@app.post("/auth/verify-otp")
+def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
+    record = OTP_STORE.get(data.identifier)
+    if not record or record["code"] != data.code or time.time() > record["expires"]:
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    
+    del OTP_STORE[data.identifier]
+    
+    # Check if user exists by email, phone, or username
+    db_user = db.query(models.User).filter(
+        (models.User.email == data.identifier) | 
+        (models.User.phone_number == data.identifier) | 
+        (models.User.username == data.identifier)
+    ).first()
+    
+    if not db_user:
+        name_part = data.identifier.split("@")[0] if "@" in data.identifier else data.identifier
+        new_user = models.User(
+            username=name_part,
+            email=data.identifier if "@" in data.identifier else None,
+            phone_number=data.identifier if "@" not in data.identifier else None
+        )
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        db_user = new_user
+        
+    return {"message": "OTP Login successful", "user_id": db_user.id, "username": db_user.username}
 
 # My Garden Routes
 @app.post("/my-garden/add", response_model=schemas.UserPlantResponse)

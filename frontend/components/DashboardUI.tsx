@@ -69,6 +69,54 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
 
     const todayStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
+    // Determine the optimal spray times dynamically based on weather
+    let optimalSprayTime = 'Loading...';
+    let optimalSprayReason = 'Fetching weather...';
+    let optimalHours: number[] = [];
+
+    if (weatherData && weatherData.hourly) {
+        const slots = [9, 12, 15, 18, 21];
+
+        // Calculate a score for each slot to find the best times
+        const scoredSlots = slots.map(h => {
+            const temp = weatherData.hourly.temperature_2m[h];
+            const wind = weatherData.hourly.wind_speed_10m[h];
+            const code = weatherData.hourly.weather_code[h];
+
+            let score = 0;
+            // Conditions for spraying: no rain (code < 50), temp < 30, wind < 15
+            if (code < 50 && temp >= 10 && temp <= 30 && wind <= 15) {
+                score += 10;
+                if (temp >= 15 && temp <= 25) score += 5; // Ideal temp
+                if (wind < 10) score += 5; // Ideal wind
+            }
+            return { hour: h, score };
+        }).filter(s => s.score > 0);
+
+        if (scoredSlots.length === 0) {
+            optimalSprayTime = 'Not Recommended';
+            optimalSprayReason = 'Poor weather conditions';
+        } else {
+            // Sort by score descending and take the top 2
+            scoredSlots.sort((a, b) => b.score - a.score);
+            const topSlots = scoredSlots.slice(0, 2).map(s => s.hour).sort((a, b) => a - b);
+            optimalHours = topSlots;
+
+            const formatHour = (h: number) => {
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const disp = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                return `${disp}:00 ${ampm}`;
+            };
+
+            optimalSprayTime = topSlots.map(formatHour).join(', ');
+            optimalSprayReason = 'Good conditions for spraying';
+        }
+    } else {
+        optimalHours = [18]; // fallback
+        optimalSprayTime = '4:00 PM';
+        optimalSprayReason = 'Usually optimal';
+    }
+
     // Default list if no user selection
     const displayPlants = userPlants.length > 0
         ? userPlants
@@ -266,10 +314,10 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                                 <span>🧪</span> Spray Fertilizer
                                             </div>
                                             <div className="font-bold text-emerald-900 leading-tight">
-                                                4:00 PM - 6:00 PM
+                                                {optimalSprayTime}
                                             </div>
                                             <div className="text-[10px] text-emerald-700 mt-0.5">
-                                                Low wind, optimal temp
+                                                {optimalSprayReason}
                                             </div>
                                         </div>
                                     </div>
@@ -286,7 +334,7 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                                 const code = weatherData.hourly.weather_code[hourIndex];
                                                 const { icon } = getWeatherDetails(code);
                                                 const timeLab = `${hourIndex}:00`;
-                                                const highlight = hourIndex === 18; // arbitrary highlight block for spray
+                                                const highlight = optimalHours.includes(hourIndex);
 
                                                 return (
                                                     <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
@@ -299,11 +347,11 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                             })
                                         ) : (
                                             [
-                                                { time: '09:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
-                                                { time: '12:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
-                                                { time: '15:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
-                                                { time: '18:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: true },
-                                                { time: '21:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '09:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(9) },
+                                                { time: '12:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(12) },
+                                                { time: '15:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(15) },
+                                                { time: '18:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(18) },
+                                                { time: '21:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(21) },
                                             ].map((slot, i) => (
                                                 <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${slot.highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
                                                     <span className={`text-[10px] font-bold ${slot.highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{slot.time}</span>

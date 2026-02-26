@@ -1,5 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
+import { API_BASE_URL } from '../config';
+import AILogo from './icons/AILogo';
 
 // Mock list of nearby markets
 const NEARBY_MARKETS = [
@@ -15,14 +19,16 @@ const DAILY_PRICES = [
             { name: "Tomato", variety: "Hybrid", price: "₹35 / kg", trend: "up", change: "+₹2" },
             { name: "Onion", variety: "Red Big", price: "₹28 / kg", trend: "stable", change: "0" },
             { name: "Potato", variety: "Regular", price: "₹22 / kg", trend: "down", change: "-₹1" },
-            { name: "Cauliflower", variety: "Medium", price: "₹40 / pc", trend: "up", change: "+₹5" }
+            { name: "Cauliflower", variety: "Medium", price: "₹40 / pc", trend: "up", change: "+₹5" },
+            { name: "Carrot", variety: "Ooty Red", price: "₹45 / kg", trend: "stable", change: "0" }
         ]
     },
     {
         id: 2, category: "Fruits", items: [
             { name: "Apple", variety: "Fuji", price: "₹140 / kg", trend: "stable", change: "0" },
             { name: "Banana", variety: "Robusta", price: "₹45 / dozen", trend: "up", change: "+₹3" },
-            { name: "Mango", variety: "Alphonso", price: "₹350 / dozen", trend: "down", change: "-₹20" }
+            { name: "Mango", variety: "Alphonso", price: "₹350 / dozen", trend: "down", change: "-₹20" },
+            { name: "Orange", variety: "Nagpur", price: "₹80 / kg", trend: "stable", change: "0" }
         ]
     },
     {
@@ -35,7 +41,47 @@ const DAILY_PRICES = [
 
 export default function Market() {
     const [activeTab, setActiveTab] = useState<'prices' | 'nearby'>('prices');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [aiResult, setAiResult] = useState('');
+    const [aiLoading, setAiLoading] = useState(false);
+
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    const cleanSearch = searchTerm.trim().toLowerCase();
+
+    // Calculate total matches
+    const totalMatches = DAILY_PRICES.reduce((acc, category) => {
+        if (!cleanSearch) return acc + category.items.length;
+        return acc + category.items.filter(item =>
+            item.name.toLowerCase().includes(cleanSearch) ||
+            item.variety.toLowerCase().includes(cleanSearch) ||
+            category.category.toLowerCase().includes(cleanSearch)
+        ).length;
+    }, 0);
+
+    useEffect(() => {
+        if (cleanSearch.length > 2 && totalMatches === 0) {
+            const delayDebounceFn = setTimeout(async () => {
+                setAiLoading(true);
+                setAiResult('');
+                try {
+                    const res = await axios.post(`${API_BASE_URL}/ask-google`, { query: `What is the current market price or mandi rate of ${searchTerm} in India? Make it short and clear.` }, {
+                        headers: { 'Bypass-Tunnel-Reminder': 'true' }
+                    });
+                    setAiResult(res.data.answer);
+                } catch (err: any) {
+                    setAiResult("Sorry, I couldn't fetch the price from the assistant right now.");
+                } finally {
+                    setAiLoading(false);
+                }
+            }, 1000);
+
+            return () => clearTimeout(delayDebounceFn);
+        } else {
+            setAiResult('');
+            setAiLoading(false);
+        }
+    }, [searchTerm, totalMatches]);
 
     return (
         <div className="flex flex-col h-full bg-[#f0f9ff] text-slate-800 font-sans pb-6">
@@ -122,6 +168,8 @@ export default function Market() {
                         <div className="relative">
                             <input
                                 type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search crops, fruits, flowers..."
                                 className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                             />
@@ -130,32 +178,72 @@ export default function Market() {
                             </svg>
                         </div>
 
-                        {DAILY_PRICES.map(category => (
-                            <div key={category.id} className="space-y-3">
-                                <h3 className="font-bold text-slate-800 border-l-4 border-blue-500 pl-3">{category.category} Mandi Rates</h3>
-                                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                                    {category.items.map((item, index) => (
-                                        <div key={index} className="flex justify-between items-center p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-800 text-sm">{item.name}</span>
-                                                    <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.variety}</span>
+                        {DAILY_PRICES.map(category => {
+                            const filteredItems = cleanSearch ? category.items.filter(item =>
+                                item.name.toLowerCase().includes(cleanSearch) ||
+                                item.variety.toLowerCase().includes(cleanSearch) ||
+                                category.category.toLowerCase().includes(cleanSearch)
+                            ) : category.items;
+
+                            if (filteredItems.length === 0) return null;
+
+                            return (
+                                <div key={category.id} className="space-y-3">
+                                    <h3 className="font-bold text-slate-800 border-l-4 border-blue-500 pl-3">{category.category} Mandi Rates</h3>
+                                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                                        {filteredItems.map((item, index) => (
+                                            <div key={index} className="flex justify-between items-center p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-slate-800 text-sm">{item.name}</span>
+                                                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.variety}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-bold text-slate-900 text-sm">{item.price}</span>
+                                                    <div className={`flex items-center gap-1 text-[10px] font-bold ${item.trend === 'up' ? 'text-red-500' : item.trend === 'down' ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                                        {item.trend === 'up' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" className="rotate-180 origin-center" /></svg>}
+                                                        {item.trend === 'down' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" /></svg>}
+                                                        {item.change !== "0" && <span>{item.change}</span>}
+                                                        {item.change === "0" && <span>Stable</span>}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex flex-col items-end">
-                                                <span className="font-bold text-slate-900 text-sm">{item.price}</span>
-                                                <div className={`flex items-center gap-1 text-[10px] font-bold ${item.trend === 'up' ? 'text-red-500' : item.trend === 'down' ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                                    {item.trend === 'up' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" className="rotate-180 origin-center" /></svg>}
-                                                    {item.trend === 'down' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" /></svg>}
-                                                    {item.change !== "0" && <span>{item.change}</span>}
-                                                    {item.change === "0" && <span>Stable</span>}
-                                                </div>
-                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {/* AI Fallback if no matches found */}
+                        {searchTerm && totalMatches === 0 && (
+                            <div className="mt-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl shadow-sm text-center animate-fade-in relative overflow-hidden">
+                                {/* Decorative blobs */}
+                                <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-indigo-200/40 rounded-full blur-2xl"></div>
+                                <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-blue-200/30 rounded-full blur-2xl"></div>
+
+                                <div className="relative z-10">
+                                    <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
+                                        <AILogo className="w-6 h-6 text-indigo-500" />
+                                    </div>
+                                    <h3 className="font-bold text-slate-800 mb-1">Not in local records</h3>
+                                    <p className="text-xs text-slate-500 mb-4">Let me check the web for the latest rates...</p>
+
+                                    {aiLoading && (
+                                        <div className="flex justify-center items-center gap-2 text-sm text-indigo-600 font-medium">
+                                            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                                            Searching live rates for "{searchTerm}"...
                                         </div>
-                                    ))}
+                                    )}
+
+                                    {!aiLoading && aiResult && (
+                                        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-indigo-100/50 text-left prose prose-sm max-w-none text-slate-700 font-medium shadow-sm">
+                                            <ReactMarkdown>{aiResult}</ReactMarkdown>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                        ))}
+                        )}
                     </div>
                 )}
             </div>

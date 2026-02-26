@@ -21,7 +21,8 @@ class PredictionResult(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    email: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
     password: str
 
 class UserLogin(BaseModel):
@@ -30,10 +31,18 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     username: str
-    email: str
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
     id: int
     class Config:
         from_attributes = True
+
+class OTPRequest(BaseModel):
+    identifier: str # Email or Phone
+
+class OTPVerify(BaseModel):
+    identifier: str
+    code: str
 
 class UserPlantCreate(BaseModel):
     user_id: int
