@@ -161,28 +161,28 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#1a1c23] border border-white/10 w-full max-w-2xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white border border-slate-200 w-full max-w-2xl max-h-[90vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
                 {/* Header */}
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/80">
                     <div>
-                        <h2 className="text-xl font-bold text-white">History: {plantName}</h2>
-                        <p className="text-sm text-slate-400">Track growth and health updates</p>
+                        <h2 className="text-xl font-bold text-slate-800">History: {plantName}</h2>
+                        <p className="text-sm text-slate-500">Track growth and health updates</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 items-center">
                         {!compareMode ? (
                             <button
                                 onClick={() => { setCompareMode(true); setSelectedLogs([]); }}
-                                className="px-3 py-1 text-xs border border-white/10 rounded-lg text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                                className="px-4 py-1.5 text-xs font-semibold border border-emerald-200 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
                             >
                                 Compare Photos
                             </button>
                         ) : (
-                            <div className="flex gap-2 items-center">
-                                <span className="text-xs text-white">{selectedLogs.length}/2 Selected</span>
+                            <div className="flex gap-3 items-center">
+                                <span className="text-xs font-semibold text-emerald-700">{selectedLogs.length}/2 Selected</span>
                                 <button
                                     onClick={() => setCompareMode(false)}
-                                    className="px-3 py-1 text-xs text-slate-400 hover:text-white"
+                                    className="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
                                 >
                                     Cancel
                                 </button>
@@ -190,9 +190,11 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                         )}
                         <button
                             onClick={onClose}
-                            className="text-slate-400 hover:text-white transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors"
                         >
-                            ✕
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -201,28 +203,28 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
 
                     {/* Comparison View Overlay */}
                     {compareMode && selectedLogs.length === 2 && (
-                        <div className="mb-6 bg-black/40 border border-emerald-500/30 rounded-xl p-4 animate-fade-in relative">
-                            <h3 className="text-center text-emerald-400 font-bold mb-4">Growth Comparison</h3>
+                        <div className="mb-6 bg-emerald-50 border border-emerald-200 rounded-xl p-5 shadow-sm animate-fade-in relative">
+                            <h3 className="text-center text-emerald-800 font-bold mb-4">Growth Comparison</h3>
                             <div className="grid grid-cols-2 gap-4">
                                 {logs.filter(l => selectedLogs.includes(l.id)).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(log => (
-                                    <div key={log.id} className="space-y-2">
-                                        <div className="aspect-square rounded-lg overflow-hidden border border-white/20 relative">
+                                    <div key={log.id} className="space-y-2 bg-white p-2 rounded-lg border border-slate-100 shadow-sm shadow-slate-200">
+                                        <div className="aspect-square rounded-lg overflow-hidden border border-slate-200 relative">
                                             {log.image_url ? (
                                                 <img src={log.image_url} className="w-full h-full object-cover" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-white/5 text-slate-500 text-xs">No Photo</div>
+                                                <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-400 text-xs font-medium">No Photo</div>
                                             )}
-                                            <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-xs text-white font-mono">
+                                            <div className="absolute top-2 left-2 bg-white/95 px-2 py-1 rounded shadow-sm text-xs text-slate-700 font-bold font-mono border border-slate-100">
                                                 {log.date}
                                             </div>
                                         </div>
-                                        <p className="text-xs text-slate-400 text-center">{log.note}</p>
+                                        <p className="text-xs text-slate-600 font-medium text-center">{log.note}</p>
                                     </div>
                                 ))}
                             </div>
                             <button
                                 onClick={() => { setSelectedLogs([]); }}
-                                className="absolute top-2 right-2 text-slate-500 hover:text-white text-xs"
+                                className="absolute top-3 right-3 text-emerald-600 hover:text-emerald-800 text-xs font-bold bg-white px-2 py-1 rounded shadow-sm border border-emerald-100"
                             >
                                 Clear
                             </button>
@@ -231,34 +233,29 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
 
                     {/* Add Log Form */}
                     {!compareMode && (
-                        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4">
-                            <h3 className="text-sm font-bold text-emerald-400 mb-3 uppercase tracking-wider">New Entry</h3>
-                            <form onSubmit={handleAddLog} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Date ... */}
-                                    {/* Status ... */}
-                                </div>
-
-                                {/* NOTE: Existing date/status inputs logic is preserved by "..." above, but I'll write full form block to be safe if I can view it all. 
-                                Actually, replace chunk is safer.
-                            */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 shadow-sm">
+                            <h3 className="text-sm font-bold text-emerald-700 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                New Entry
+                            </h3>
+                            <form onSubmit={handleAddLog} className="space-y-5">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Date</label>
+                                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Date</label>
                                         <input
                                             type="date"
                                             value={date}
                                             onChange={e => setDate(e.target.value)}
-                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white text-sm"
+                                            className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-sm"
                                             required
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">Status</label>
+                                        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Status</label>
                                         <select
                                             value={status}
                                             onChange={e => setStatus(e.target.value)}
-                                            className="w-full bg-black/20 border border-white/10 rounded-lg p-2 text-white text-sm"
+                                            className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-sm"
                                         >
                                             <option value="Healthy">Healthy 🟢</option>
                                             <option value="Flowering">Flowering 🌸</option>
@@ -270,16 +267,19 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Photo (Optional)</label>
+                                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">Photo (Optional)</label>
 
                                     {showCamera ? (
-                                        <div className="mb-4 bg-black rounded-xl overflow-hidden border border-emerald-500/50">
-                                            <div className="flex justify-between items-center p-2 bg-black/40">
-                                                <span className="text-white text-xs font-bold px-2">📷 Camera Active</span>
+                                        <div className="mb-4 bg-slate-900 rounded-xl overflow-hidden border border-emerald-500/50 shadow-md">
+                                            <div className="flex justify-between items-center p-2 bg-slate-800">
+                                                <span className="text-emerald-400 text-xs font-bold px-2 flex items-center gap-1">
+                                                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                                                    Camera Active
+                                                </span>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowCamera(false)}
-                                                    className="text-red-400 text-xs hover:text-white"
+                                                    className="bg-slate-700 text-white text-xs px-2 py-1 rounded hover:bg-slate-600 transition-colors"
                                                 >
                                                     Close
                                                 </button>
@@ -305,18 +305,18 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                                     />
                                                     <label
                                                         htmlFor="log-file-input"
-                                                        className={`flex items-center justify-center w-full p-3 rounded-lg border border-dashed cursor-pointer transition-colors ${file ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400' : 'border-white/20 bg-white/5 text-slate-400 hover:bg-white/10 hover:border-white/40'
+                                                        className={`flex items-center justify-center w-full p-2.5 rounded-lg border-2 border-dashed cursor-pointer transition-colors shadow-sm ${file ? 'border-emerald-500 bg-emerald-50 text-emerald-700 font-medium' : 'border-slate-300 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-400 font-medium'
                                                             }`}
                                                     >
                                                         <span className="text-sm truncate">
-                                                            {file ? `📎 ${file.name}` : '📁 Upload / Capture'}
+                                                            {file ? `📎 ${file.name}` : '📁 Upload Image'}
                                                         </span>
                                                     </label>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowCamera(true)}
-                                                    className="px-4 bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/30 transition-colors"
+                                                    className="px-4 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg hover:bg-emerald-200 transition-colors shadow-sm"
                                                     title="Use Camera"
                                                 >
                                                     📷
@@ -325,41 +325,51 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
 
                                             {/* Analysis Result Section */}
                                             {(analyzing || analysisResult) && (
-                                                <div className="bg-black/30 rounded-lg p-3 border border-white/10 animate-fade-in text-sm">
+                                                <div className="bg-white rounded-lg p-4 border border-emerald-100 shadow-sm shadow-emerald-50 animate-fade-in text-sm">
                                                     {analyzing ? (
-                                                        <div className="flex items-center gap-2 text-xs text-emerald-400">
-                                                            <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                                            Analyzing plant health...
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                                                            <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+                                                            AI is analyzing plant health...
                                                         </div>
                                                     ) : analysisResult && (
                                                         <div className="space-y-3">
                                                             <div className="flex justify-between items-start">
                                                                 <div>
-                                                                    <span className="block text-slate-400 text-xs">Detected:</span>
-                                                                    <span className={`font-bold ${analysisResult.disease_name.toLowerCase().includes('healthy') ? 'text-emerald-400' : 'text-red-400'}`}>
+                                                                    <span className="block text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">AI Detected:</span>
+                                                                    <span className={`font-bold pb-0.5 border-b-2 ${analysisResult.disease_name.toLowerCase().includes('healthy') ? 'text-emerald-600 border-emerald-200' : 'text-red-600 border-red-200'}`}>
                                                                         {analysisResult.disease_name}
                                                                     </span>
                                                                 </div>
-                                                                <div className="text-right">
-                                                                    <span className="block text-slate-400 text-xs text-nowrap">Confidence:</span>
-                                                                    <span className="text-white font-mono text-nowrap">{(analysisResult.confidence * 100).toFixed(1)}%</span>
+                                                                <div className="text-right bg-slate-50 px-2 py-1 rounded shadow-sm border border-slate-100">
+                                                                    <span className="block text-slate-400 text-[10px] uppercase font-bold text-nowrap">Confidence</span>
+                                                                    <span className="text-slate-800 font-mono text-xs font-bold text-nowrap">{(analysisResult.confidence * 100).toFixed(1)}%</span>
                                                                 </div>
                                                             </div>
 
                                                             {/* Precautions / Details */}
                                                             {analysisResult.details && (
-                                                                <div className="mt-2 pt-2 border-t border-white/10 space-y-3">
+                                                                <div className="mt-3 pt-3 border-t border-slate-100 space-y-3">
                                                                     <div>
-                                                                        <span className="text-emerald-400 font-semibold text-xs uppercase tracking-wide">Treatment Advice:</span>
-                                                                        <ul className="list-disc pl-4 text-slate-300 mt-1 space-y-1 text-xs">
+                                                                        <span className="text-emerald-700 font-bold text-xs uppercase tracking-wide flex items-center gap-1 mb-1">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                                                            </svg>
+                                                                            Treatment Advice:
+                                                                        </span>
+                                                                        <ul className="list-disc pl-5 text-slate-600 space-y-1 text-xs font-medium">
                                                                             {analysisResult.details.treatments?.slice(0, 2).map((t: any, i: number) => (
                                                                                 <li key={i}>{t.description}</li>
                                                                             ))}
                                                                         </ul>
                                                                     </div>
                                                                     <div>
-                                                                        <span className="text-blue-400 font-semibold text-xs uppercase tracking-wide">Prevention:</span>
-                                                                        <p className="text-slate-300 mt-1 text-xs">{analysisResult.details.prevention}</p>
+                                                                        <span className="text-blue-600 font-bold text-xs uppercase tracking-wide flex items-center gap-1 mb-1">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                                            </svg>
+                                                                            Prevention:
+                                                                        </span>
+                                                                        <p className="text-slate-600 text-xs font-medium">{analysisResult.details.prevention}</p>
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -373,8 +383,8 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                 </div>
 
                                 <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="block text-xs text-slate-400">Notes (Voice Input Available)</label>
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <label className="block text-xs font-semibold text-slate-600">Notes (Voice Input Available)</label>
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -393,7 +403,7 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                                 };
                                                 recognition.start();
                                             }}
-                                            className={`text-xs flex items-center gap-1 ${isListening ? 'text-red-400 animate-pulse' : 'text-emerald-400 hover:text-emerald-300'}`}
+                                            className={`text-xs font-bold flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-md transition-colors ${isListening ? 'text-red-600 bg-red-50 animate-pulse' : 'text-slate-600 hover:text-emerald-700 hover:bg-emerald-50'}`}
                                         >
                                             {isListening ? '🔴 Listening...' : '🎤 Tap to Speak'}
                                         </button>
@@ -402,17 +412,17 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                         value={note}
                                         onChange={e => setNote(e.target.value)}
                                         placeholder="e.g., Added compost today, looks taller..."
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg p-3 text-white text-sm min-h-[80px]"
+                                        className="w-full bg-white border border-slate-300 rounded-lg p-3 text-slate-800 text-sm min-h-[80px] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all shadow-sm"
                                         required
                                     />
                                 </div>
-                                <div className="flex justify-end">
+                                <div className="flex justify-end pt-2">
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-emerald-900/20 transition-all disabled:opacity-50"
+                                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-sm font-bold shadow-md transition-all disabled:opacity-50"
                                     >
-                                        {submitting ? 'Saving...' : 'Add Entry'}
+                                        {submitting ? 'Saving...' : 'Save Entry'}
                                     </button>
                                 </div>
                             </form>
@@ -421,12 +431,12 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                     }
 
                     {/* Timeline */}
-                    <div className="relative border-l-2 border-white/10 ml-3 space-y-8 pb-4">
+                    <div className="relative border-l-2 border-slate-200 ml-3 space-y-8 pb-4">
                         {loading && logs.length === 0 ? (
-                            <p className="text-center text-slate-500 py-4">Loading history...</p>
+                            <p className="text-center text-slate-500 py-4 font-semibold">Loading history...</p>
                         ) : logs.length === 0 ? (
                             <div className="text-center py-8">
-                                <p className="text-slate-500 italic">No logs yet. Add one above!</p>
+                                <p className="text-slate-500 italic font-medium">No logs yet. Add one above!</p>
                             </div>
                         ) : (
                             logs.map((log) => (
@@ -435,13 +445,13 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                     {compareMode ? (
                                         <button
                                             onClick={() => toggleLogSelection(log.id)}
-                                            className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${selectedLogs.includes(log.id) ? 'bg-emerald-500 border-white scale-125' : 'bg-[#1a1c23] border-slate-500'
+                                            className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all shadow-sm ${selectedLogs.includes(log.id) ? 'bg-emerald-500 border-white scale-125' : 'bg-white border-slate-400'
                                                 }`}
                                         >
-                                            {selectedLogs.includes(log.id) && <span className="text-[8px] text-white">✓</span>}
+                                            {selectedLogs.includes(log.id) && <span className="text-[8px] font-bold text-white">✓</span>}
                                         </button>
                                     ) : (
-                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-[#1a1c23] ${log.status === 'Healthy' ? 'bg-emerald-500' :
+                                        <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm ${log.status === 'Healthy' ? 'bg-emerald-500' :
                                             log.status === 'Sick' ? 'bg-red-500' :
                                                 log.status === 'Flowering' ? 'bg-pink-500' :
                                                     'bg-blue-500'
@@ -451,23 +461,23 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                     {/* Content */}
                                     <div
                                         onClick={() => compareMode && toggleLogSelection(log.id)}
-                                        className={`bg-white/5 border rounded-xl p-4 transition-all cursor-pointer ${compareMode && selectedLogs.includes(log.id)
-                                            ? 'border-emerald-500/50 bg-emerald-500/5 shadow-lg shadow-emerald-900/10'
-                                            : 'border-white/10 hover:border-white/20'
+                                        className={`bg-white border rounded-xl p-4 transition-all shadow-sm ${compareMode && selectedLogs.includes(log.id)
+                                            ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200 cursor-pointer shadow-md'
+                                            : compareMode ? 'border-slate-200 hover:border-slate-300 opacity-70 hover:opacity-100 cursor-pointer' : 'border-slate-200'
                                             }`}
                                     >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-xs font-mono text-slate-400">{log.date}</span>
-                                            <span className={`text-xs px-2 py-1 rounded-full bg-white/5 border ${log.status === 'Healthy' ? 'text-emerald-400 border-emerald-500/30' :
-                                                log.status === 'Sick' ? 'text-red-400 border-red-500/30' :
-                                                    'text-blue-400 border-blue-500/30'
+                                        <div className="flex justify-between items-start mb-3">
+                                            <span className="text-xs font-mono font-bold text-slate-500 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded shadow-sm">{log.date}</span>
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full border shadow-sm ${log.status === 'Healthy' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' :
+                                                log.status === 'Sick' ? 'text-red-700 bg-red-50 border-red-200' :
+                                                    'text-blue-700 bg-blue-50 border-blue-200'
                                                 }`}>
                                                 {log.status}
                                             </span>
                                         </div>
                                         {/* Log Image if available */}
                                         {log.image_url && (
-                                            <div className="mb-3 rounded-lg overflow-hidden border border-white/10 max-w-full">
+                                            <div className="mb-3 rounded-lg overflow-hidden border border-slate-200 shadow-sm max-w-full">
                                                 <img
                                                     src={log.image_url}
                                                     alt="Log attachment"
@@ -475,7 +485,7 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                                                 />
                                             </div>
                                         )}
-                                        <p className="text-slate-200 text-sm leading-relaxed">{log.note}</p>
+                                        <p className="text-slate-700 text-sm leading-relaxed font-medium">{log.note}</p>
                                     </div>
                                 </div>
                             ))
