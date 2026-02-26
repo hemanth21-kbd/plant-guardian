@@ -253,25 +253,32 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                         <div className="px-4">
                             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
                                 {displayPlants.map((crop, i) => (
-                                    <div key={crop} className="flex flex-col items-center gap-2 min-w-[72px]">
-                                        <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center p-2">
+                                    <div
+                                        key={crop}
+                                        onClick={() => onTabChange('garden')}
+                                        className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer group"
+                                    >
+                                        <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center p-2 group-hover:border-emerald-400 group-hover:shadow-md transition-all">
                                             {/* Placeholder Icons based on crop names */}
-                                            <span className="text-2xl">
+                                            <span className="text-2xl group-hover:scale-110 transition-transform">
                                                 {getIcon(crop)}
                                             </span>
                                         </div>
-                                        <span className="text-xs font-medium text-slate-600">{crop}</span>
+                                        <span className="text-xs font-medium text-slate-600 group-hover:text-emerald-700 transition-colors">{crop}</span>
                                     </div>
                                 ))}
 
                                 {/* Add Button */}
-                                <div className="flex flex-col items-center gap-2 min-w-[72px]">
-                                    <button className="w-16 h-16 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200 flex items-center justify-center transition-transform active:scale-95">
+                                <div
+                                    className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer"
+                                    onClick={() => onTabChange('garden')}
+                                >
+                                    <button className="w-16 h-16 rounded-full bg-blue-600 text-white shadow-lg shadow-blue-200 flex items-center justify-center transition-transform hover:scale-105 active:scale-95">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-8 h-8">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                                         </svg>
                                     </button>
-                                    <span className="text-xs font-medium text-slate-600">Add</span>
+                                    <span className="text-xs font-medium text-slate-600">Add Crop</span>
                                 </div>
                             </div>
                         </div>
