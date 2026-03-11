@@ -14,29 +14,432 @@ const NEARBY_MARKETS = [
 
 // Mock daily prices
 const DAILY_PRICES = [
-    {
-        id: 1, category: "Vegetables", items: [
-            { name: "Tomato", variety: "Hybrid", price: "₹35 / kg", trend: "up", change: "+₹2" },
-            { name: "Onion", variety: "Red Big", price: "₹28 / kg", trend: "stable", change: "0" },
-            { name: "Potato", variety: "Regular", price: "₹22 / kg", trend: "down", change: "-₹1" },
-            { name: "Cauliflower", variety: "Medium", price: "₹40 / pc", trend: "up", change: "+₹5" },
-            { name: "Carrot", variety: "Ooty Red", price: "₹45 / kg", trend: "stable", change: "0" }
-        ]
-    },
-    {
-        id: 2, category: "Fruits", items: [
-            { name: "Apple", variety: "Fuji", price: "₹140 / kg", trend: "stable", change: "0" },
-            { name: "Banana", variety: "Robusta", price: "₹45 / dozen", trend: "up", change: "+₹3" },
-            { name: "Mango", variety: "Alphonso", price: "₹350 / dozen", trend: "down", change: "-₹20" },
-            { name: "Orange", variety: "Nagpur", price: "₹80 / kg", trend: "stable", change: "0" }
-        ]
-    },
-    {
-        id: 3, category: "Flowers", items: [
-            { name: "Rose", variety: "Red Local", price: "₹120 / bundle", trend: "up", change: "+₹10" },
-            { name: "Marigold", variety: "Orange", price: "₹60 / kg", trend: "stable", change: "0" }
-        ]
-    }
+    { id: 1, category: "Vegetables", items: [
+        {
+                "name": "Tomato",
+                "variety": "Hybrid",
+                "price": "₹35 / kg",
+                "trend": "up",
+                "change": "+₹2"
+        },
+        {
+                "name": "Onion",
+                "variety": "Red Big",
+                "price": "₹28 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Potato",
+                "variety": "Regular",
+                "price": "₹22 / kg",
+                "trend": "down",
+                "change": "-₹1"
+        },
+        {
+                "name": "Cauliflower",
+                "variety": "Medium",
+                "price": "₹40 / pc",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Carrot",
+                "variety": "Ooty Red",
+                "price": "₹45 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Cabbage",
+                "variety": "Green",
+                "price": "₹30 / kg",
+                "trend": "down",
+                "change": "-₹3"
+        },
+        {
+                "name": "Spinach",
+                "variety": "Local",
+                "price": "₹15 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Garlic",
+                "variety": "White",
+                "price": "₹180 / kg",
+                "trend": "up",
+                "change": "+₹10"
+        },
+        {
+                "name": "Ginger",
+                "variety": "Fresh",
+                "price": "₹120 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Capsicum",
+                "variety": "Green",
+                "price": "₹60 / kg",
+                "trend": "down",
+                "change": "-₹5"
+        },
+        {
+                "name": "Brinjal",
+                "variety": "Purple Long",
+                "price": "₹40 / kg",
+                "trend": "up",
+                "change": "+₹2"
+        },
+        {
+                "name": "Ladies Finger",
+                "variety": "Green",
+                "price": "₹45 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Bottle Gourd",
+                "variety": "Medium",
+                "price": "₹25 / pc",
+                "trend": "down",
+                "change": "-₹2"
+        },
+        {
+                "name": "Bitter Gourd",
+                "variety": "Dark Green",
+                "price": "₹50 / kg",
+                "trend": "up",
+                "change": "+₹4"
+        },
+        {
+                "name": "Cucumber",
+                "variety": "Local",
+                "price": "₹35 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Green Chilli",
+                "variety": "Medium Spicy",
+                "price": "₹80 / kg",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Beetroot",
+                "variety": "Red",
+                "price": "₹50 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Radish",
+                "variety": "White",
+                "price": "₹30 / kg",
+                "trend": "down",
+                "change": "-₹2"
+        },
+        {
+                "name": "Lemon",
+                "variety": "Yellow",
+                "price": "₹60 / kg",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Pumpkin",
+                "variety": "Yellow",
+                "price": "₹25 / kg",
+                "trend": "stable",
+                "change": "0"
+        }
+] },
+    { id: 2, category: "Fruits", items: [
+        {
+                "name": "Apple",
+                "variety": "Fuji",
+                "price": "₹140 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Banana",
+                "variety": "Robusta",
+                "price": "₹45 / dozen",
+                "trend": "up",
+                "change": "+₹3"
+        },
+        {
+                "name": "Mango",
+                "variety": "Alphonso",
+                "price": "₹350 / dozen",
+                "trend": "down",
+                "change": "-₹20"
+        },
+        {
+                "name": "Orange",
+                "variety": "Nagpur",
+                "price": "₹80 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Grapes",
+                "variety": "Seedless Green",
+                "price": "₹90 / kg",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Papaya",
+                "variety": "Red Lady",
+                "price": "₹40 / kg",
+                "trend": "down",
+                "change": "-₹5"
+        },
+        {
+                "name": "Watermelon",
+                "variety": "Kiran",
+                "price": "₹25 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Pomegranate",
+                "variety": "Bhagwa",
+                "price": "₹150 / kg",
+                "trend": "up",
+                "change": "+₹10"
+        },
+        {
+                "name": "Pineapple",
+                "variety": "Queen",
+                "price": "₹60 / pc",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Guava",
+                "variety": "Allahabad Safeda",
+                "price": "₹50 / kg",
+                "trend": "down",
+                "change": "-₹5"
+        },
+        {
+                "name": "Kiwi",
+                "variety": "Zespri",
+                "price": "₹120 / pack",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Strawberry",
+                "variety": "Mahabaleshwar",
+                "price": "₹80 / box",
+                "trend": "up",
+                "change": "+₹10"
+        },
+        {
+                "name": "Sweet Lime",
+                "variety": "Mosambi",
+                "price": "₹60 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Custard Apple",
+                "variety": "Balanagar",
+                "price": "₹100 / kg",
+                "trend": "down",
+                "change": "-₹10"
+        },
+        {
+                "name": "Sapota",
+                "variety": "Chikoo",
+                "price": "₹60 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Pear",
+                "variety": "Babugosha",
+                "price": "₹120 / kg",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Dragon Fruit",
+                "variety": "Red",
+                "price": "₹90 / pc",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Plum",
+                "variety": "Red",
+                "price": "₹150 / kg",
+                "trend": "down",
+                "change": "-₹10"
+        },
+        {
+                "name": "Peach",
+                "variety": "Local",
+                "price": "₹130 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Fig",
+                "variety": "Fresh",
+                "price": "₹180 / kg",
+                "trend": "up",
+                "change": "+₹15"
+        }
+] },
+    { id: 3, category: "Flowers", items: [
+        {
+                "name": "Rose",
+                "variety": "Red Local",
+                "price": "₹120 / bundle",
+                "trend": "up",
+                "change": "+₹10"
+        },
+        {
+                "name": "Marigold",
+                "variety": "Orange",
+                "price": "₹60 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Jasmine",
+                "variety": "Mogra",
+                "price": "₹300 / kg",
+                "trend": "up",
+                "change": "+₹20"
+        },
+        {
+                "name": "Lotus",
+                "variety": "Pink",
+                "price": "₹15 / pc",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Orchid",
+                "variety": "Purple",
+                "price": "₹400 / bunch",
+                "trend": "down",
+                "change": "-₹20"
+        },
+        {
+                "name": "Tulip",
+                "variety": "Mixed",
+                "price": "₹500 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Lily",
+                "variety": "White Asiatic",
+                "price": "₹250 / bunch",
+                "trend": "up",
+                "change": "+₹15"
+        },
+        {
+                "name": "Sunflower",
+                "variety": "Large",
+                "price": "₹30 / pc",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Daisy",
+                "variety": "White",
+                "price": "₹150 / bunch",
+                "trend": "down",
+                "change": "-₹10"
+        },
+        {
+                "name": "Gerbera",
+                "variety": "Mixed",
+                "price": "₹80 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Chrysanthemum",
+                "variety": "Yellow",
+                "price": "₹140 / kg",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Hibiscus",
+                "variety": "Red",
+                "price": "₹50 / kg",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Carnation",
+                "variety": "Mixed",
+                "price": "₹200 / bunch",
+                "trend": "down",
+                "change": "-₹10"
+        },
+        {
+                "name": "Tuberose",
+                "variety": "Rajnigandha",
+                "price": "₹250 / kg",
+                "trend": "up",
+                "change": "+₹15"
+        },
+        {
+                "name": "Asters",
+                "variety": "Purple",
+                "price": "₹100 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Gladiolus",
+                "variety": "Mixed Spikes",
+                "price": "₹180 / bunch",
+                "trend": "down",
+                "change": "-₹10"
+        },
+        {
+                "name": "Anthurium",
+                "variety": "Red",
+                "price": "₹300 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Bougainvillea",
+                "variety": "Pink",
+                "price": "₹40 / bunch",
+                "trend": "up",
+                "change": "+₹5"
+        },
+        {
+                "name": "Lavender",
+                "variety": "Fresh",
+                "price": "₹350 / bunch",
+                "trend": "stable",
+                "change": "0"
+        },
+        {
+                "name": "Peony",
+                "variety": "Pink",
+                "price": "₹450 / bunch",
+                "trend": "down",
+                "change": "-₹30"
+        }
+] }
 ];
 
 export default function Market() {

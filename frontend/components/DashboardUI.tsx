@@ -30,30 +30,23 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
         }
     }, [activeTab]);
 
-    const requestLocation = () => {
-        if (!navigator.geolocation) {
-            setLocationStatus('denied');
-            return;
-        }
-
+    const requestLocation = async () => {
         setLocationStatus('loading');
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                setLocationStatus('granted');
-                try {
-                    const { latitude, longitude } = position.coords;
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto&forecast_days=1`);
-                    const data = await res.json();
-                    setWeatherData(data);
-                } catch (err) {
-                    console.error("Failed to fetch weather", err);
-                }
-            },
-            (error) => {
-                console.error("Location error:", error);
-                setLocationStatus('denied');
-            }
-        );
+        try {
+            // Using IP-based location automatically bypasses mobile permission issues
+            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            const ipData = await ipRes.json();
+            const { latitude, longitude, city } = ipData;
+            
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,weather_code,wind_speed_10m&timezone=auto&forecast_days=1`);
+            const data = await res.json();
+            data.city = city; // Store city for UI display
+            setWeatherData(data);
+            setLocationStatus('granted');
+        } catch (error) {
+            console.error("Location error:", error);
+            setLocationStatus('denied');
+        }
     };
 
     // Weather interpretation helper
@@ -69,52 +62,9 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
 
     const todayStr = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 
-    // Determine the optimal spray times dynamically based on weather
-    let optimalSprayTime = 'Loading...';
-    let optimalSprayReason = 'Fetching weather...';
-    let optimalHours: number[] = [];
-
+    let optimalHours: number[] = [9, 12, 15, 18, 21]; // fallback
     if (weatherData && weatherData.hourly) {
-        const slots = [9, 12, 15, 18, 21];
-
-        // Calculate a score for each slot to find the best times
-        const scoredSlots = slots.map(h => {
-            const temp = weatherData.hourly.temperature_2m[h];
-            const wind = weatherData.hourly.wind_speed_10m[h];
-            const code = weatherData.hourly.weather_code[h];
-
-            let score = 0;
-            // Conditions for spraying: no rain (code < 50), temp < 30, wind < 15
-            if (code < 50 && temp >= 10 && temp <= 30 && wind <= 15) {
-                score += 10;
-                if (temp >= 15 && temp <= 25) score += 5; // Ideal temp
-                if (wind < 10) score += 5; // Ideal wind
-            }
-            return { hour: h, score };
-        }).filter(s => s.score > 0);
-
-        if (scoredSlots.length === 0) {
-            optimalSprayTime = 'Not Recommended';
-            optimalSprayReason = 'Poor weather conditions';
-        } else {
-            // Sort by score descending and take the top 2
-            scoredSlots.sort((a, b) => b.score - a.score);
-            const topSlots = scoredSlots.slice(0, 2).map(s => s.hour).sort((a, b) => a - b);
-            optimalHours = topSlots;
-
-            const formatHour = (h: number) => {
-                const ampm = h >= 12 ? 'PM' : 'AM';
-                const disp = h > 12 ? h - 12 : (h === 0 ? 12 : h);
-                return `${disp}:00 ${ampm}`;
-            };
-
-            optimalSprayTime = topSlots.map(formatHour).join(', ');
-            optimalSprayReason = 'Good conditions for spraying';
-        }
-    } else {
-        optimalHours = [18]; // fallback
-        optimalSprayTime = '4:00 PM';
-        optimalSprayReason = 'Usually optimal';
+        optimalHours = [9, 12, 15, 18, 21];
     }
 
     // Default list if no user selection
@@ -290,44 +240,27 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-yellow-200 rounded-full blur-3xl opacity-40"></div>
                                 <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-50"></div>
 
-                                <div className="relative z-10 grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <div className="text-xs font-bold text-sky-800 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                            </svg>
-                                            {todayStr}
-                                        </div>
-                                        <div className="flex items-end gap-2">
-                                            <span className="text-4xl font-black text-slate-800">
-                                                {weatherData ? Math.round(weatherData.current.temperature_2m) : '--'}°
-                                            </span>
-                                            <span className="text-sm font-medium text-slate-500 mb-1">
-                                                {weatherData ? getWeatherDetails(weatherData.current.weather_code).label : 'Loading...'}
-                                            </span>
-                                        </div>
-                                        {weatherData && (
-                                            <div className="text-xs text-sky-700 mt-2 font-medium flex gap-3">
-                                                <span>💧 {weatherData.current.relative_humidity_2m}%</span>
-                                                <span>🌬️ {Math.round(weatherData.current.wind_speed_10m)} km/h</span>
-                                            </div>
-                                        )}
+                                <div className="relative z-10 mb-4">
+                                    <div className="text-xs font-bold text-sky-800 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                        </svg>
+                                        {weatherData?.city ? `${weatherData.city} • ${todayStr}` : todayStr}
                                     </div>
-                                    <div className="bg-white/60 rounded-2xl p-3 flex flex-col justify-center border border-white/80 shadow-sm backdrop-blur-sm relative overflow-hidden">
-                                        {/* Highlight glow for spraying box */}
-                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/50 to-transparent"></div>
-                                        <div className="relative z-10">
-                                            <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                <span>🧪</span> Spray Fertilizer
-                                            </div>
-                                            <div className="font-bold text-emerald-900 leading-tight">
-                                                {optimalSprayTime}
-                                            </div>
-                                            <div className="text-[10px] text-emerald-700 mt-0.5">
-                                                {optimalSprayReason}
-                                            </div>
-                                        </div>
+                                    <div className="flex items-end gap-3">
+                                        <span className="text-5xl font-black text-slate-800">
+                                            {weatherData ? Math.round(weatherData.current.temperature_2m) : '--'}°
+                                        </span>
+                                        <span className="text-lg font-medium text-slate-500 mb-1">
+                                            {weatherData ? getWeatherDetails(weatherData.current.weather_code).label : 'Loading...'}
+                                        </span>
                                     </div>
+                                    {weatherData && (
+                                        <div className="text-sm text-sky-700 mt-2 font-medium flex gap-4">
+                                            <span>💧 Humidity: {weatherData.current.relative_humidity_2m}%</span>
+                                            <span>🌬️ Wind: {Math.round(weatherData.current.wind_speed_10m)} km/h</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Full day temperature timeline */}
@@ -341,30 +274,30 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                                                 const code = weatherData.hourly.weather_code[hourIndex];
                                                 const { icon } = getWeatherDetails(code);
                                                 const timeLab = `${hourIndex}:00`;
-                                                const highlight = optimalHours.includes(hourIndex);
+                                                const highlight = true; // Simplified, remove spray logic
 
                                                 return (
-                                                    <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
-                                                        <span className={`text-[10px] font-bold ${highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{timeLab}</span>
+                                                    <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] bg-white/70 text-slate-700 border border-white/80 shadow-sm transition-all hover:bg-white`}>
+                                                        <span className="text-[10px] font-bold text-slate-500">{timeLab}</span>
                                                         <span className="text-xl my-1.5">{icon}</span>
                                                         <span className="text-sm font-bold">{temp}°</span>
-                                                        <span className={`text-[8px] font-medium mt-1 ${highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{wind} km/h</span>
+                                                        <span className="text-[8px] font-medium mt-1 text-slate-400">{wind} km/h</span>
                                                     </div>
                                                 );
                                             })
                                         ) : (
                                             [
-                                                { time: '09:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(9) },
-                                                { time: '12:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(12) },
-                                                { time: '15:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(15) },
-                                                { time: '18:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(18) },
-                                                { time: '21:00', temp: '--°', icon: '⏳', wind: '-- km/h', highlight: optimalHours.includes(21) },
+                                                { time: '09:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '12:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '15:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '18:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
+                                                { time: '21:00', temp: '--°', icon: '⏳', wind: '-- km/h' },
                                             ].map((slot, i) => (
-                                                <div key={i} className={`flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] ${slot.highlight ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-2 ring-emerald-400 ring-offset-1 ring-offset-blue-50' : 'bg-white/70 text-slate-700 border border-white/80 shadow-sm'}`}>
-                                                    <span className={`text-[10px] font-bold ${slot.highlight ? 'text-emerald-50' : 'text-slate-500'}`}>{slot.time}</span>
+                                                <div key={i} className="flex flex-col items-center flex-shrink-0 snap-center rounded-2xl p-2.5 min-w-[70px] bg-white/70 text-slate-700 border border-white/80 shadow-sm">
+                                                    <span className="text-[10px] font-bold text-slate-500">{slot.time}</span>
                                                     <span className="text-xl my-1.5">{slot.icon}</span>
                                                     <span className="text-sm font-bold">{slot.temp}</span>
-                                                    <span className={`text-[8px] font-medium mt-1 ${slot.highlight ? 'text-emerald-100' : 'text-slate-400'}`}>{slot.wind}</span>
+                                                    <span className="text-[8px] font-medium mt-1 text-slate-400">{slot.wind}</span>
                                                 </div>
                                             ))
                                         )}
