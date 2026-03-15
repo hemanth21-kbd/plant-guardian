@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#4ADE80" />
+        <meta name="theme-color" content="#38A169" />
       </head>
       {/* <body className={`${outfit.variable} antialiased text-slate-200 font-sans`}> */}
       <body className={`antialiased text-slate-200 font-sans`}>
