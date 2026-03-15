@@ -13,5 +13,5 @@ venv/
 frontend/node_modules/
 frontend/.next/
 frontend/out/
-frontend/android/
-frontend/ios/
+# frontend/android/
+# frontend/ios/

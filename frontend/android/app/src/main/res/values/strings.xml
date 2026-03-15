@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PlantFertilizerAI</string>
+    <string name="title_activity_main">PlantFertilizerAI</string>
+    <string name="package_name">com.plantfertilizer.app</string>
+    <string name="custom_url_scheme">com.plantfertilizer.app</string>
+</resources>
