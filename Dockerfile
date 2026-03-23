@@ -24,7 +24,8 @@ RUN chmod 777 /code/backend/uploads
 # COPY ./plants.db /code/plants.db 
 
 # Set permissions for the database so it can be written to
-# RUN chmod 777 /code/plants.db
+RUN touch /code/plants.db && chmod 777 /code/plants.db
+RUN chmod 777 /code
 
 # Expose the port Hugging Face expects (7860)
 EXPOSE 7860

@@ -187,22 +187,26 @@ def login(user: schemas.UserLogin, db: Session = Depends(get_db)):
     
     return {"message": "Login successful", "user_id": db_user.id, "username": db_user.username}
 
-OTP_STORE = {}
+from typing import Dict, Any
+
+OTP_STORE: Dict[str, Any] = {}
 
 @app.post("/auth/request-otp")
 def request_otp(data: schemas.OTPRequest):
     code = f"{random.randint(100000, 999999)}"
-    OTP_STORE[data.identifier] = {"code": code, "expires": time.time() + 300} # 5 mins
+    OTP_STORE[data.identifier] = {"code": code, "expires": float(time.time() + 300)} # 5 mins
     print(f"\n{'='*40}\n[TEST OTP] Identifier: {data.identifier} | Code: {code}\n{'='*40}\n")
     return {"message": "OTP sent successfully! (Check console for code)"}
 
 @app.post("/auth/verify-otp")
 def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
     record = OTP_STORE.get(data.identifier)
-    if not record or record["code"] != data.code or time.time() > record["expires"]:
+    current_time: float = time.time()
+    
+    if not record or record["code"] != data.code or current_time > float(record["expires"]):
         raise HTTPException(status_code=400, detail="Invalid or expired OTP")
     
-    del OTP_STORE[data.identifier]
+    OTP_STORE.pop(data.identifier, None)
     
     # Check if user exists by email, phone, or username
     db_user = db.query(models.User).filter(
