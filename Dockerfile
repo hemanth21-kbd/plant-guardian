@@ -1,34 +1,33 @@
-
 # Use Python 3.9
 FROM python:3.9
 
-# Set working directory
-WORKDIR /code
+# Create a user with ID 1000
+RUN useradd -m -u 1000 user
 
-# Copy the requirements file
-COPY ./backend/requirements.txt /code/requirements.txt
+# Set working directory to the user's home app folder
+WORKDIR /home/user/app
 
-# Install dependencies
-# We install --no-cache-dir to keep the image small
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+# Set environment variables
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
 
-# Copy the backend code and models
-COPY ./backend /code/backend
-COPY ./models /code/models
+# Copy requirements and install dependencies as the 'user'
+COPY --chown=user ./backend/requirements.txt /home/user/app/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /home/user/app/requirements.txt
 
-# Create uploads directory inside the container
-RUN mkdir -p /code/backend/uploads
-RUN chmod 777 /code/backend/uploads
+# Copy the rest of the application code
+COPY --chown=user . /home/user/app
 
-# Create a clean database (or you can copy your existing one if you want initial data)
-# COPY ./plants.db /code/plants.db 
+# Ensure uploads and database permissions are set
+RUN mkdir -p /home/user/app/backend/uploads && chmod 777 /home/user/app/backend/uploads
+RUN touch /home/user/app/plants.db && chmod 777 /home/user/app/plants.db
 
-# Set permissions for the database so it can be written to
-RUN touch /code/plants.db && chmod 777 /code/plants.db
-RUN chmod 777 /code
+# Explicitly switch to the non-root 'user'
+USER user
 
-# Expose the port Hugging Face expects (7860)
+# Expose the standard Hugging Face port
 EXPOSE 7860
 
-# Run the application
+# Run the backend application
+# Use -m to ensure python finds the backend module
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860"]
