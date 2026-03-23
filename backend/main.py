@@ -157,29 +157,18 @@ async def predict_disease(
 # User Auth Routes
 @app.post("/auth/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Check for existing user info
-    if user.username and user.username.strip():
-        db_user = db.query(models.User).filter(models.User.username == user.username).first()
+    if user.email:
+        db_user = db.query(models.User).filter(models.User.email == user.email).first()
         if db_user:
-            raise HTTPException(status_code=400, detail="This Farmer Name is already registered. Please use a unique name.")
-
-    if user.email and user.email.strip():
-        db_email = db.query(models.User).filter(models.User.email == user.email).first()
-        if db_email:
-            raise HTTPException(status_code=400, detail="This email is already registered to another farmer.")
+            raise HTTPException(status_code=400, detail="Email already registered")
             
-    if user.phone_number and user.phone_number.strip():
+    if user.phone_number:
         db_phone = db.query(models.User).filter(models.User.phone_number == user.phone_number).first()
         if db_phone:
-            raise HTTPException(status_code=400, detail="This phone number is already registered.")
+            raise HTTPException(status_code=400, detail="Phone number already registered")
     
     hashed_password = hashlib.sha256(user.password.encode()).hexdigest()
-    new_user = models.User(
-        username=user.username.strip() if user.username else None, 
-        email=user.email.strip() if user.email and user.email.strip() else None, 
-        phone_number=user.phone_number.strip() if user.phone_number else None, 
-        hashed_password=hashed_password
-    )
+    new_user = models.User(username=user.username, email=user.email, phone_number=user.phone_number, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
