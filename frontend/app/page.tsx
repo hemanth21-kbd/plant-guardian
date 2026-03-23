@@ -6,7 +6,6 @@ import DiseaseInfo from "@/components/DiseaseInfo";
 import GoogleAssist from "@/components/GoogleAssist";
 import AILogo from "@/components/icons/AILogo";
 import DashboardUI from "@/components/DashboardUI";
-import AuthForm from "@/components/AuthForm";
 import PlantSelection from "@/components/PlantSelection";
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
@@ -28,11 +27,10 @@ axios.interceptors.request.use(config => {
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
 
-  // App State: 'auth' -> 'selection' -> 'main'
-  const [view, setView] = useState<'auth' | 'selection' | 'main'>('auth');
+  // App State: 'selection' -> 'main'
+  const [view, setView] = useState<'selection' | 'main'>('selection');
 
-  // User Data
-  const [user, setUser] = useState<any>(null);
+  // App Data
   const [selectedPlants, setSelectedPlants] = useState<string[]>([]);
 
   const [result, setResult] = useState(null);
@@ -42,25 +40,16 @@ export default function Home() {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Check for existing session
-    const storedUser = localStorage.getItem('user');
+    // Check for existing state
     const storedPlants = localStorage.getItem('selectedPlants');
 
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-      if (storedPlants) {
-        setSelectedPlants(JSON.parse(storedPlants));
-        setView('main');
-      } else {
-        setView('selection');
-      }
+    if (storedPlants) {
+      setSelectedPlants(JSON.parse(storedPlants));
+      setView('main');
+    } else {
+      setView('selection');
     }
   }, []);
-
-  const handleLoginSuccess = (userData: any) => {
-    setUser(userData);
-    setView('selection');
-  };
 
   const handleSelectionComplete = (plants: string[]) => {
     setSelectedPlants(plants);
@@ -93,45 +82,6 @@ export default function Home() {
       setLoading(false);
     }
   };
-
-  // ----------------------------------------------------------------------
-  // VIEW: AUTHENTICATION
-  // ----------------------------------------------------------------------
-  if (view === 'auth') {
-    return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/20 rounded-full blur-[100px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/20 rounded-full blur-[100px]" />
-        </div>
-
-        <div className="relative z-10 w-full max-w-4xl px-4 grid md:grid-cols-2 gap-12 items-center">
-          <div className="hidden md:block space-y-6">
-            <h1 className="text-5xl font-bold text-white leading-tight">
-              Start Your Journey <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Farmer Registration</span>
-            </h1>
-            <p className="text-slate-400 text-lg">
-              Register once to access AI disease detection, market rates, and community support.
-              Your data helps us provide personalized care for your specific crops.
-            </p>
-
-            <div className="flex gap-4 pt-4">
-              <div className="flex items-center gap-2 text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                <span>🛡️</span> <span>Crop Protection</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                <span>📊</span> <span>Market Access</span>
-              </div>
-            </div>
-          </div>
-
-          <AuthForm onLoginSuccess={handleLoginSuccess} />
-        </div>
-      </div>
-    );
-  }
 
   // ----------------------------------------------------------------------
   // VIEW: SELECTION
