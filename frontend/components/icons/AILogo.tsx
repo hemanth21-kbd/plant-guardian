@@ -13,10 +13,10 @@ export default function AILogo({ className = "w-6 h-6" }: { className?: string }
             strokeLinejoin="round"
             className={className}
         >
-            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"></path>
-            <line x1="9" y1="12" x2="9" y2="12"></line>
-            <line x1="15" y1="12" x2="15" y2="12"></line>
-            <path d="M10 16a4 4 0 0 0 4 0"></path>
+            <path d="M12 22V8" />
+            <path d="M12 8c-4 0-7 3-7 7s3 7 7 7 7-3 7-7-3-7-7-7z" />
+            <path d="M12 2c0 3.3 2.7 6 6 6s6-2.7 6-6-2.7-6-6-6" />
+            <path d="M12 2c0 3.3-2.7 6-6 6S0 5.3 0 2s2.7-6 6-6" />
         </svg>
     );
 }

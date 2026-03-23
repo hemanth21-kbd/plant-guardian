@@ -19,6 +19,12 @@ import Profile from "@/components/Profile";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageOptions } from "@/utils/translations";
 
+// Global axios interceptor for tunnel bypass
+axios.interceptors.request.use(config => {
+  config.headers['Bypass-Tunnel-Reminder'] = 'true';
+  return config;
+});
+
 export default function Home() {
   const { t, language, setLanguage } = useLanguage();
 
@@ -103,20 +109,20 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-4xl px-4 grid md:grid-cols-2 gap-12 items-center">
           <div className="hidden md:block space-y-6">
             <h1 className="text-5xl font-bold text-white leading-tight">
-              Grow Smarter with <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Plant Guardian</span>
+              Start Your Journey <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Farmer Registration</span>
             </h1>
             <p className="text-slate-400 text-lg">
-              Your AI-powered assistant for healthy crops and bountiful harvests.
-              Detect diseases, manage your garden, and get expert advice instantly.
+              Register once to access AI disease detection, market rates, and community support.
+              Your data helps us provide personalized care for your specific crops.
             </p>
 
             <div className="flex gap-4 pt-4">
               <div className="flex items-center gap-2 text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                <span>🌱</span> <span>Instant Diagnosis</span>
+                <span>🛡️</span> <span>Crop Protection</span>
               </div>
               <div className="flex items-center gap-2 text-slate-300 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                <span>🌦️</span> <span>Real-time Alerts</span>
+                <span>📊</span> <span>Market Access</span>
               </div>
             </div>
           </div>

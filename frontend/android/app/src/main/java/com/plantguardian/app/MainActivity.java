@@ -1,4 +1,4 @@
-package com.plantfertilizer.app;
+package com.plantguardian.app;
 
 import com.getcapacitor.BridgeActivity;
 

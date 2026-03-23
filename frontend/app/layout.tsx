@@ -19,6 +19,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log("APP VERSION: 2.0 (SPROUT ICON)");
   return (
     <html lang="en">
       <head>

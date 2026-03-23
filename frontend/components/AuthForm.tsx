@@ -8,8 +8,8 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
-    const [method, setMethod] = useState<'password' | 'otp'>('otp');
-    const [isLogin, setIsLogin] = useState(true);
+    // We only want registration now
+    const [method, setMethod] = useState<'password' | 'otp'>('password');
 
     // Auth Fields
     const [username, setUsername] = useState('');
@@ -26,29 +26,32 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
     const [successMsg, setSuccessMsg] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const handlePasswordSubmit = async (e: React.FormEvent) => {
+    const handleRegistrationSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccessMsg('');
         setLoading(true);
 
         try {
-            const endpoint = isLogin ? '/auth/login' : '/auth/register';
-            const payload = isLogin
-                ? { username, password }
-                : { username, email, phone_number: phone, password };
+            // Force registration endpoint
+            const endpoint = '/auth/register';
+            const payload = { 
+                username, 
+                email, 
+                phone_number: phone, 
+                password 
+            };
 
             const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload);
 
-            const userData = isLogin ? res.data : { ...res.data, user_id: res.data.id };
+            // Handle response data
+            const userData = { ...res.data, user_id: res.data.id };
 
             localStorage.setItem('user', JSON.stringify(userData));
             onLoginSuccess(userData);
         } catch (err: any) {
-            if (err.response?.status !== 400 && err.response?.status !== 401) {
-                console.error("Auth error details:", err);
-            }
-            setError(err.response?.data?.detail || 'Authentication failed');
+            console.error("Registration error details:", err);
+            setError(err.response?.data?.detail || 'Registration failed. Please check your details.');
         } finally {
             setLoading(false);
         }
@@ -88,22 +91,25 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
 
     return (
         <div className="max-w-md mx-auto bg-black/40 backdrop-blur-xl p-8 rounded-2xl border border-white/10 shadow-2xl">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                Welcome to Plant Guardian
+            <h2 className="text-2xl font-bold text-white mb-2 text-center">
+                Farmer Registration
             </h2>
+            <p className="text-slate-400 text-sm mb-6 text-center">
+                Join Plant Guardian to protect your crops
+            </p>
 
             <div className="flex bg-white/5 p-1 rounded-lg mb-6">
+                <button
+                    onClick={() => { setMethod('password'); setError(''); setOtpSent(false); }}
+                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${method === 'password' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                >
+                    Standard Form
+                </button>
                 <button
                     onClick={() => { setMethod('otp'); setError(''); }}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${method === 'otp' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
                 >
-                    OTP Login
-                </button>
-                <button
-                    onClick={() => { setMethod('password'); setError(''); }}
-                    className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${method === 'password' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
-                >
-                    Password Log In
+                    Quick OTP Sign up
                 </button>
             </div>
 
@@ -165,7 +171,7 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                                 disabled={loading || otpCode.length < 4}
                                 className="w-full bg-teal-500 text-white font-semibold py-3 rounded-lg hover:bg-teal-400 transition-all disabled:opacity-50 shadow-lg shadow-teal-500/20"
                             >
-                                {loading ? 'Verifying...' : 'Verify & Login/Register'}
+                                {loading ? 'Verifying...' : 'Verify & Register'}
                             </button>
                             <button
                                 type="button"
@@ -178,40 +184,41 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                     )}
                 </div>
             ) : (
-                <form onSubmit={handlePasswordSubmit} className="space-y-4 animate-fade-in">
+                <form onSubmit={handleRegistrationSubmit} className="space-y-4 animate-fade-in">
                     <div>
-                        <label className="block text-sm text-slate-400 mb-1">Username</label>
+                        <label className="block text-sm text-slate-400 mb-1">Full Name</label>
                         <input
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Farmer Name"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                             required
                         />
                     </div>
 
-                    {!isLogin && (
-                        <>
-                            <div className="animate-fade-in">
-                                <label className="block text-sm text-slate-400 mb-1">Email</label>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                                />
-                            </div>
-                            <div className="animate-fade-in">
-                                <label className="block text-sm text-slate-400 mb-1">Phone Number</label>
-                                <input
-                                    type="tel"
-                                    value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                                />
-                            </div>
-                        </>
-                    )}
+                    <div className="animate-fade-in">
+                        <label className="block text-sm text-slate-400 mb-1">Email (Optional)</label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="email@example.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                        />
+                    </div>
+                    
+                    <div className="animate-fade-in">
+                        <label className="block text-sm text-slate-400 mb-1">Phone Number</label>
+                        <input
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="+91 00000 00000"
+                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                            required
+                        />
+                    </div>
 
                     <div>
                         <label className="block text-sm text-slate-400 mb-1">Password</label>
@@ -219,6 +226,7 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            placeholder="••••••••"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                             required
                         />
@@ -227,20 +235,14 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold py-3 rounded-lg hover:from-emerald-400 hover:to-teal-400 transition-all shadow-lg shadow-emerald-900/20 disabled:opacity-50"
+                        className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold py-3 rounded-lg hover:from-emerald-400 hover:to-teal-400 transition-all shadow-lg shadow-emerald-900/20 disabled:opacity-50 mt-4"
                     >
-                        {loading ? 'Processing...' : (isLogin ? 'Log In' : 'Sign Up')}
+                        {loading ? 'Registering...' : 'Register as Farmer'}
                     </button>
-
-                    <div className="text-center mt-4">
-                        <button
-                            type="button"
-                            onClick={() => setIsLogin(!isLogin)}
-                            className="text-emerald-400 hover:text-emerald-300 text-sm transition-colors"
-                        >
-                            {isLogin ? "Don't have an account? Sign up" : "Already have an account? Log in"}
-                        </button>
-                    </div>
+                    
+                    <p className="text-[10px] text-slate-500 text-center mt-4 uppercase tracking-widest">
+                        One-time registration for crop protection
+                    </p>
                 </form>
             )}
         </div>

@@ -134,11 +134,11 @@ export default function GoogleAssist() {
         <div className="max-w-3xl mx-auto w-full">
             <div className="text-center mb-8 space-y-2">
                 <div className="flex justify-center mb-4">
-                    <div className="p-4 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 shadow-lg shadow-orange-500/30 animate-float">
+                    <div className="p-4 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-500 shadow-lg shadow-emerald-500/30 animate-float">
                         <AILogo className="w-10 h-10 text-white" />
                     </div>
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900">Google Gardening Assistant</h2>
+                <h2 className="text-2xl font-bold text-slate-900">Plant Guardian Assistant</h2>
                 <p className="text-slate-600">Ask any question about plants, fertilizers, or diseases.</p>
             </div>
 
@@ -149,7 +149,7 @@ export default function GoogleAssist() {
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         placeholder="e.g., How often should I water my tomatoes?"
-                        className="bg-white border border-slate-200 shadow-sm flex-1 p-4 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                        className="bg-white border border-slate-200 shadow-sm flex-1 p-4 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all"
                     />
                     <button
                         type="button"
@@ -165,20 +165,20 @@ export default function GoogleAssist() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-amber-400 hover:to-orange-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-900/20"
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-8 py-4 rounded-xl font-semibold hover:from-emerald-400 hover:to-teal-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-900/20"
                     >
-                        {loading ? 'Asking...' : 'Ask Google'}
+                        {loading ? 'Asking...' : 'Ask Guardian'}
                     </button>
                 </div>
             </form>
 
             {answer && (
-                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-6 shadow-sm animate-fade-in relative overflow-hidden">
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 shadow-sm animate-fade-in relative overflow-hidden">
                     {/* Decorative blobs */}
-                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-amber-200/40 rounded-full blur-2xl"></div>
-                    <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-orange-200/30 rounded-full blur-2xl"></div>
+                    <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-emerald-200/40 rounded-full blur-2xl"></div>
+                    <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-teal-200/30 rounded-full blur-2xl"></div>
                     <div className="relative z-10 flex items-start gap-4">
-                        <div className="p-2 rounded-lg bg-amber-100 text-amber-600 shadow-sm border border-amber-200/50">
+                        <div className="p-2 rounded-lg bg-emerald-100 text-emerald-600 shadow-sm border border-emerald-200/50">
                             <AILogo className="w-6 h-6" />
                         </div>
                         <div className="prose prose-slate max-w-none text-slate-700 leading-relaxed font-medium">
