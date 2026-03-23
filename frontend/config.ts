@@ -12,4 +12,4 @@
 // Use Environment Variable or Default to Cloud URL for Mobile App
 // export const API_BASE_URL = 'https://plant-guardian.onrender.com';
 // export const API_BASE_URL = 'https://hemanth0821-plant-guardian-backend.hf.space';
-export const API_BASE_URL = 'https://2f60a005192d22fa-157-50-201-10.serveousercontent.com';
+export const API_BASE_URL = 'https://a825d8abde7775e2-157-50-201-10.serveousercontent.com';

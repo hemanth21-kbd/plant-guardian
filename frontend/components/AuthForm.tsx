@@ -43,7 +43,9 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
             onLoginSuccess(userData);
         } catch (err: any) {
             console.error("Registration error details:", err);
-            setError(err.response?.data?.detail || 'Registration failed. Please use a unique farmer name.');
+            const serverError = err.response?.data?.detail;
+            const networkError = !err.response ? "Connectivity issue: Please check if you are connected to the internet or try again later." : null;
+            setError(serverError || networkError || 'Registration failed. Please try a different farmer name.');
         } finally {
             setLoading(false);
         }
