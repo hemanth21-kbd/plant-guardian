@@ -2,6 +2,25 @@
 import React from 'react';
 
 export default function Profile() {
+    const [user, setUser] = React.useState<any>(null);
+
+    React.useEffect(() => {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    if (!user) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full p-10 text-center">
+                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">👤</div>
+                <h2 className="text-xl font-bold text-slate-800">Not Logged In</h2>
+                <p className="text-slate-500 mb-6">Please go to the Garden tab to sign in and view your profile.</p>
+            </div>
+        );
+    }
+
     return (
         <div className="flex flex-col h-full bg-[#f8fafc] text-slate-800 font-sans pb-6">
             {/* Header / Profile Summary */}
@@ -14,19 +33,19 @@ export default function Profile() {
                     <div className="w-24 h-24 rounded-full bg-slate-200 border-4 border-white shadow-md flex items-center justify-center overflow-hidden mb-3">
                         {/* Placeholder Avatar */}
                         <img
-                            src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&q=80&w=200&h=200"
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.username}`}
                             alt="Farmer Avatar"
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Rajesh Kumar</h2>
-                    <p className="text-sm font-medium text-slate-500">+91 98765 43210</p>
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">{user.username}</h2>
+                    <p className="text-sm font-medium text-slate-500">{user.email}</p>
 
                     <div className="mt-3 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 text-emerald-600">
                             <path fillRule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-xs font-bold text-emerald-700">Pro Farmer Verified</span>
+                        <span className="text-xs font-bold text-emerald-700">Verified Farmer</span>
                     </div>
                 </div>
             </div>

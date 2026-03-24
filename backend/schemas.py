@@ -21,8 +21,7 @@ class PredictionResult(BaseModel):
 
 class UserCreate(BaseModel):
     username: str
-    email: Optional[str] = None
-    phone_number: Optional[str] = None
+    email: str
     password: str
 
 class UserLogin(BaseModel):
@@ -32,7 +31,6 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     username: str
     email: Optional[str] = None
-    phone_number: Optional[str] = None
     id: int
     class Config:
         from_attributes = True

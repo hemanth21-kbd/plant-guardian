@@ -123,6 +123,24 @@ async def predict_disease(
                         ) for t in db_disease.treatments
                     ]
                 )
+            else:
+                # Fallback to Gemini for details if not in DB
+                print(f"Disease {disease_name} not in DB. Fetching from Gemini...")
+                gemini_details = gemini_client.get_disease_info(plant_name, disease_name)
+                if gemini_details:
+                    details = schemas.DiseaseBase(
+                        name=disease_name,
+                        severity="Moderate",
+                        symptoms=gemini_details.get("description", "Symptoms not available"),
+                        prevention=gemini_details.get("prevention", "Prevention not available"),
+                        treatments=[
+                            schemas.TreatmentBase(
+                                type="General",
+                                description=gemini_details.get("treatment", "Treatment not available"),
+                                cost_approx="N/A"
+                            )
+                        ]
+                    )
                 
             final_result = schemas.PredictionResult(
                 plant_name=plant_name,
@@ -157,18 +175,15 @@ async def predict_disease(
 # User Auth Routes
 @app.post("/auth/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    if user.email:
-        db_user = db.query(models.User).filter(models.User.email == user.email).first()
-        if db_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
-            
-    if user.phone_number:
-        db_phone = db.query(models.User).filter(models.User.phone_number == user.phone_number).first()
-        if db_phone:
-            raise HTTPException(status_code=400, detail="Phone number already registered")
+    if not user.email:
+         raise HTTPException(status_code=400, detail="Email is required")
+
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
     
     hashed_password = hashlib.sha256(user.password.encode()).hexdigest()
-    new_user = models.User(username=user.username, email=user.email, phone_number=user.phone_number, hashed_password=hashed_password)
+    new_user = models.User(username=user.username, email=user.email, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

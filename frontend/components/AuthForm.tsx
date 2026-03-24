@@ -12,7 +12,6 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
 
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
@@ -29,8 +28,7 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
             const endpoint = '/auth/register';
             const payload = { 
                 username, 
-                email: email || undefined, 
-                phone_number: phone, 
+                email, 
                 password 
             };
 
@@ -85,23 +83,12 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                     </div>
 
                     <div className="animate-fade-in">
-                        <label className="block text-sm text-slate-400 mb-1">Email (Optional)</label>
+                        <label className="block text-sm text-slate-400 mb-1">Email</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="email@example.com"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
-                        />
-                    </div>
-                    
-                    <div className="animate-fade-in">
-                        <label className="block text-sm text-slate-400 mb-1">Phone Number</label>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            placeholder="+91 00000 00000"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"
                             required
                         />
