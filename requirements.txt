@@ -2,7 +2,6 @@ fastapi
 uvicorn
 sqlalchemy
 python-multipart
-tensorflow
 pillow
 google-generativeai>=0.8.3
 python-dotenv

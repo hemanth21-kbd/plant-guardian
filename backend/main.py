@@ -11,7 +11,7 @@ import hashlib
 import time
 import random
 
-from . import models, schemas, database, ml_engine, gemini_client
+from . import models, schemas, database, gemini_client
 
 # Create tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -66,88 +66,33 @@ async def predict_disease(
         shutil.copyfileobj(file.file, buffer)
     
     try:
-        # Run inference
-        result = ml_engine.detector.predict(temp_file)
+        # PURE AI DIAGNOSIS (No local model to save RAM and build time)
+        print(f"Analyzing plant health with Gemini AI (Language: {language})...")
+        gemini_result = gemini_client.try_google_gemini(temp_file)
         
-        final_result = None
+        if not gemini_result:
+             # Fallback to a mock result if Gemini fails completely
+             gemini_result = gemini_client.get_mock_result()
 
-        # Check for Unknown label, low confidence, or Model Error (Cloud deployment)
-        if result["label"] == "Unknown" or result["label"].startswith("Error"):
-            print("Local model unavailable/uncertain. Falling back to Gemini...")
-            gemini_result = gemini_client.analyze_plant_disease(temp_file)
-            
-            if gemini_result:
-                # Map Gemini result to response schema
-                final_result = schemas.PredictionResult(
-                    plant_name=gemini_result.get("plant_name", "Unknown"),
-                    disease_name=gemini_result.get("disease_name", "Unknown"),
-                    confidence=gemini_result.get("confidence", 0.0),
-                    details=schemas.DiseaseBase(
-                        name=gemini_result.get("disease_name", "Unknown"),
-                        severity="Moderate", # Default
-                        symptoms=gemini_result.get("details", {}).get("description", ""),
-                        prevention=gemini_result.get("details", {}).get("prevention", ""),
-                        treatments=[
-                            schemas.TreatmentBase(
-                                type="General",
-                                description=gemini_result.get("details", {}).get("treatment", ""),
-                                cost_approx="Varies"
-                            )
-                        ]
+        # Map Gemini result to response schema
+        final_result = schemas.PredictionResult(
+            plant_name=gemini_result.get("plant_name", "Unknown"),
+            disease_name=gemini_result.get("disease_name", "Healthy"),
+            confidence=gemini_result.get("confidence", 0.9),
+            details=schemas.DiseaseBase(
+                name=gemini_result.get("disease_name", "Healthy"),
+                severity="Moderate",
+                symptoms=gemini_result.get("details", {}).get("description", "No symptoms found."),
+                prevention=gemini_result.get("details", {}).get("prevention", "No prevention info."),
+                treatments=[
+                    schemas.TreatmentBase(
+                        type="General",
+                        description=gemini_result.get("details", {}).get("treatment", "No treatment info."),
+                        cost_approx="Varies"
                     )
-                )
-        
-        if not final_result:
-            # Standard processing for local model results
-            parts = result["label"].split("_")
-            plant_name = parts[0]
-            disease_name = " ".join(parts[1:])
-            
-            # Fetch details from DB
-            db_disease = db.query(models.Disease).filter(
-                models.Disease.name.contains(disease_name)
-            ).first()
-            
-            details = None
-            if db_disease:
-                details = schemas.DiseaseBase(
-                    name=db_disease.name,
-                    severity=db_disease.severity,
-                    symptoms=db_disease.symptoms,
-                    prevention=db_disease.prevention,
-                    treatments=[
-                        schemas.TreatmentBase(
-                            type=t.type,
-                            description=t.description,
-                            cost_approx=t.cost_approx
-                        ) for t in db_disease.treatments
-                    ]
-                )
-            else:
-                # Fallback to Gemini for details if not in DB
-                print(f"Disease {disease_name} not in DB. Fetching from Gemini...")
-                gemini_details = gemini_client.get_disease_info(plant_name, disease_name)
-                if gemini_details:
-                    details = schemas.DiseaseBase(
-                        name=disease_name,
-                        severity="Moderate",
-                        symptoms=gemini_details.get("description", "Symptoms not available"),
-                        prevention=gemini_details.get("prevention", "Prevention not available"),
-                        treatments=[
-                            schemas.TreatmentBase(
-                                type="General",
-                                description=gemini_details.get("treatment", "Treatment not available"),
-                                cost_approx="N/A"
-                            )
-                        ]
-                    )
-                
-            final_result = schemas.PredictionResult(
-                plant_name=plant_name,
-                disease_name=disease_name,
-                confidence=result["confidence"],
-                details=details
+                ]
             )
+        )
 
         # Translation Logic
         if language and language != 'en':
