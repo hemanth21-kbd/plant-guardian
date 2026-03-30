@@ -17,6 +17,7 @@ import Shops from "@/components/Shops";
 import Profile from "@/components/Profile";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageOptions } from "@/utils/translations";
+import { Toaster, toast } from "react-hot-toast";
 
 // Global axios interceptor for tunnel bypass
 axios.interceptors.request.use(config => {
@@ -75,9 +76,22 @@ export default function Home() {
         },
       });
       setResult(response.data);
+      toast.success("Analysis complete!", { icon: "🌿" });
+
+      // Save to scan history
+      const newHistory = {
+          id: Date.now(),
+          date: new Date().toLocaleString(),
+          plant_name: response.data.plant_name,
+          disease_name: response.data.disease_name
+      };
+      const existingHistory = JSON.parse(localStorage.getItem('scanHistory') || '[]');
+      localStorage.setItem('scanHistory', JSON.stringify([newHistory, ...existingHistory]));
+
     } catch (err) {
       console.error(err);
       setError("Failed to analyze image. Please try again.");
+      toast.error("Analysis failed.");
     } finally {
       setLoading(false);
     }
@@ -145,6 +159,7 @@ export default function Home() {
             <DiseaseInfo result={result} />
           </div>
         )}
+        <Toaster position="top-center" />
       </div>
     </DashboardUI>
   );

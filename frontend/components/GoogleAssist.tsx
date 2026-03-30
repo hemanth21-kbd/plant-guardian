@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import AILogo from './icons/AILogo';
 import { API_BASE_URL } from '../config';
 import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+import { toast } from 'react-hot-toast';
 
 export default function GoogleAssist() {
     const [query, setQuery] = useState('');
@@ -52,6 +53,18 @@ export default function GoogleAssist() {
                 headers: { 'Bypass-Tunnel-Reminder': 'true' }
             });
             setAnswer(res.data.answer);
+            toast.success("Found an answer for you!", { icon: "💡" });
+
+            // Save the discussion
+            const newDiscussion = {
+                id: Date.now(),
+                date: new Date().toLocaleString(),
+                query: text,
+                answer: res.data.answer
+            };
+            const existingDiscussions = JSON.parse(localStorage.getItem('savedDiscussions') || '[]');
+            localStorage.setItem('savedDiscussions', JSON.stringify([newDiscussion, ...existingDiscussions]));
+
         } catch (err: any) {
             console.error("Google Assist Error:", err);
             if (err.response) {
@@ -63,6 +76,7 @@ export default function GoogleAssist() {
                 console.error("Error setting up request:", err.message);
             }
             setAnswer('Sorry, I usually know the answer, but I cannot reach the server right now. Is the backend running?');
+            toast.error("Failed to fetch answer.");
         } finally {
             setLoading(false);
         }

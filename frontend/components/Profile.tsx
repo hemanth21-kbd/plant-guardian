@@ -1,22 +1,117 @@
 "use client";
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 export default function Profile() {
-    const [user, setUser] = React.useState<any>(null);
+    const [user, setUser] = useState<any>(null);
+    const [viewMode, setViewMode] = useState<'main' | 'edit' | 'discussions' | 'history' | 'terms'>('main');
+    const [editForm, setEditForm] = useState({ username: '', email: '' });
+    const [discussions, setDiscussions] = useState<any[]>([]);
+    const [history, setHistory] = useState<any[]>([]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
-            setUser(JSON.parse(storedUser));
+            const parsed = JSON.parse(storedUser);
+            setUser(parsed);
+            setEditForm({ username: parsed.username || '', email: parsed.email || '' });
         }
     }, []);
+
+    const loadDiscussions = () => {
+        setDiscussions(JSON.parse(localStorage.getItem('savedDiscussions') || '[]'));
+        setViewMode('discussions');
+    };
+
+    const loadHistory = () => {
+        setHistory(JSON.parse(localStorage.getItem('scanHistory') || '[]'));
+        setViewMode('history');
+    };
+
+    const handleSaveProfile = () => {
+        const updatedUser = { ...user, ...editForm };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        toast.success("Profile updated!");
+        setViewMode('main');
+    };
 
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-10 text-center">
                 <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">👤</div>
                 <h2 className="text-xl font-bold text-slate-800">Not Logged In</h2>
-                <p className="text-slate-500 mb-6">Please go to the Garden tab to sign in and view your profile.</p>
+            </div>
+        );
+    }
+
+    if (viewMode === 'edit') {
+        return (
+            <div className="p-6 h-full bg-[#f8fafc] overflow-y-auto">
+                <button onClick={() => setViewMode('main')} className="mb-4 text-emerald-600 font-bold flex items-center gap-1">
+                    ◀ Back
+                </button>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">Edit Profile</h2>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">Name</label>
+                        <input type="text" value={editForm.username} onChange={e => setEditForm({...editForm, username: e.target.value})} className="w-full border p-3 rounded-lg" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-600 mb-1">Email</label>
+                        <input type="email" value={editForm.email} onChange={e => setEditForm({...editForm, email: e.target.value})} className="w-full border p-3 rounded-lg" />
+                    </div>
+                    <button onClick={handleSaveProfile} className="w-full bg-emerald-600 hover:bg-emerald-700 transition-colors text-white font-bold p-3 rounded-lg mt-4 shadow-md shadow-emerald-500/20">Save Changes</button>
+                </div>
+            </div>
+        );
+    }
+
+    if (viewMode === 'discussions') {
+        return (
+            <div className="p-6 h-full bg-[#f8fafc] overflow-y-auto">
+                <button onClick={() => setViewMode('main')} className="mb-4 text-emerald-600 font-bold flex items-center gap-1">◀ Back</button>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">Saved Discussions</h2>
+                {discussions.length === 0 ? <p className="text-slate-500">No saved discussions yet.</p> : discussions.map((d: any) => (
+                    <div key={d.id} className="bg-white p-4 rounded-xl border mb-3 shadow-sm">
+                        <p className="text-xs text-slate-400 mb-1">{d.date}</p>
+                        <p className="font-bold text-slate-700">{d.query}</p>
+                        <p className="text-sm text-slate-600 mt-2 line-clamp-3">{d.answer}</p>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (viewMode === 'history') {
+        return (
+            <div className="p-6 h-full bg-[#f8fafc] overflow-y-auto">
+                <button onClick={() => setViewMode('main')} className="mb-4 text-emerald-600 font-bold flex items-center gap-1">◀ Back</button>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">Disease Scan History</h2>
+                {history.length === 0 ? <p className="text-slate-500">No previous scans found.</p> : history.map((h: any) => (
+                    <div key={h.id} className="bg-white p-4 rounded-xl border mb-3 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p className="font-bold text-slate-700">{h.plant_name}</p>
+                            <p className="text-sm text-rose-600 font-medium">{h.disease_name}</p>
+                        </div>
+                        <p className="text-xs text-slate-400">{h.date}</p>
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    if (viewMode === 'terms') {
+        return (
+            <div className="p-6 h-full bg-[#f8fafc] overflow-y-auto pb-20">
+                <button onClick={() => setViewMode('main')} className="mb-4 text-emerald-600 font-bold flex items-center gap-1">◀ Back</button>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6">Terms & Conditions</h2>
+                <div className="bg-white p-6 border rounded-2xl text-sm text-slate-600 space-y-4 shadow-sm">
+                    <p><strong>1. Introduction</strong><br/>Welcome to PlantGuardian. By using our application, you agree to comply with and be bound by these terms.</p>
+                    <p><strong>2. Use of Service</strong><br/>The application provides educational and AI-assisted crop diagnosis functionalities. We provide no guarantee and cannot be held liable for crop loss or damages resulting from actions taken based on app data.</p>
+                    <p><strong>3. Privacy Policy</strong><br/>We prioritize your data privacy. Profile settings and scanning histories are predominantly stored locally on your device unless explicitly backed up to our servers upon login.</p>
+                    <p><strong>4. Support and Maintenance</strong><br/>We offer specialized help to address your concerns. Reach us through the 'Help & Support' option within the profile section.</p>
+                </div>
             </div>
         );
     }
@@ -67,7 +162,7 @@ export default function Profile() {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-slate-300"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         </button>
 
-                        <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <button onClick={loadDiscussions} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" /></svg>
@@ -77,7 +172,7 @@ export default function Profile() {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-slate-300"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         </button>
 
-                        <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <button onClick={loadHistory} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" /></svg>
@@ -120,7 +215,7 @@ export default function Profile() {
                             </div>
                         </button>
 
-                        <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <button onClick={() => setViewMode('edit')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
@@ -137,7 +232,7 @@ export default function Profile() {
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-2 mb-3">Support & Legal</h3>
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden divide-y divide-slate-50">
 
-                        <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <button onClick={() => window.location.href = "mailto:support@plantguardian.com?subject=Help%20and%20Support"} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
@@ -147,7 +242,7 @@ export default function Profile() {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-slate-300"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
                         </button>
 
-                        <button className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                        <button onClick={() => setViewMode('terms')} className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
