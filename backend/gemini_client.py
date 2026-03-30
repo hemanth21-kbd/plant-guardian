@@ -51,7 +51,7 @@ def try_google_gemini(image_path):
     
     try:
         # Prepare the model
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         
         # Load image
         with open(image_path, "rb") as f:
@@ -137,7 +137,7 @@ def ask_gemini(query):
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
     
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         response = model.generate_content(query)
         return response.text
     except Exception as e:
@@ -149,7 +149,7 @@ def translate_text(text, target_language):
     if not API_KEY: return text
     
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         prompt = f"Translate the following JSON content to {target_language}. Return ONLY the JSON with translated values, keeping keys and structure exactly the same: {text}"
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
@@ -161,7 +161,7 @@ def get_disease_info(plant_name, disease_name):
     if not API_KEY: return None
     
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         prompt = f"Provide detailed information about {disease_name} in {plant_name}. Return JSON with keys: description, prevention, treatment."
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})

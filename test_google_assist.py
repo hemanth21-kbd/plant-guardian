@@ -1,7 +1,7 @@
 import requests
 import json
 
-url = "https://hemanth0821-plant-guardian-backend.hf.space/ask-google"
+url = "http://127.0.0.1:8000/ask-google"
 payload = {"query": "What is the best fertilizer for roses?"}
 headers = {"Content-Type": "application/json"}
 
