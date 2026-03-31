@@ -122,7 +122,10 @@ export default function Home() {
   } else if (activeTab === "shops") {
     tabContent = <Shops />;
   } else if (activeTab === "profile") {
-    tabContent = <Profile />;
+    tabContent = <Profile onSelectDiscussion={(query, answer) => {
+        localStorage.setItem('resumeDiscussion', JSON.stringify({query, answer}));
+        setActiveTab('google');
+    }} />;
   }
 
   return (

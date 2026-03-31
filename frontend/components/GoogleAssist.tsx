@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import AILogo from './icons/AILogo';
@@ -12,6 +12,16 @@ export default function GoogleAssist() {
     const [answer, setAnswer] = useState('');
     const [loading, setLoading] = useState(false);
     const [isListening, setIsListening] = useState(false);
+
+    useEffect(() => {
+        const resume = localStorage.getItem('resumeDiscussion');
+        if (resume) {
+            const parsed = JSON.parse(resume);
+            setQuery(parsed.query || '');
+            setAnswer(parsed.answer || '');
+            localStorage.removeItem('resumeDiscussion');
+        }
+    }, []);
 
     const fetchAnswer = async (text: string) => {
         if (!text.trim()) return;
