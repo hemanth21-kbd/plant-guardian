@@ -140,7 +140,7 @@ def ask_gemini(query):
         # Use gemini-2.0-flash (supported by the local older SDK)
         model = genai.GenerativeModel('gemini-2.0-flash')
         # Instructing the AI to be extremely concise immediately speeds up text generation
-        fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Here is the user's message: {query}"
+        fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Focus on plant care. Here is the user's message: {query}"
         
         # Max output tokens limit cuts off rambling, returning the response instantly
         response = model.generate_content(
@@ -152,6 +152,32 @@ def ask_gemini(query):
         print(f"Chat Error: {e}")
         pass
     return "I am unable to connect to the brain right now. Please try again."
+
+def stream_gemini(query):
+    """Generates a streaming response for real-time interaction."""
+    if not API_KEY:
+        yield "AI Service Unavailable (Key Missing)"
+        return
+
+    try:
+        model = genai.GenerativeModel('gemini-2.0-flash')
+        fast_prompt = f"You are Plant Guardian, a highly knowledgeable and responsive AI assistant. Your goal is to provide immediate, actionable advice on plant care, disease diagnosis, and cultivation. Keep your answers clear, professional, and helpful. User message: {query}"
+        
+        response = model.generate_content(
+            fast_prompt,
+            generation_config={"max_output_tokens": 1000},
+            stream=True
+        )
+        
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
+    except Exception as e:
+        print(f"Streaming Error: {e}")
+        if "429" in str(e) or "quota" in str(e).lower():
+            yield "I'm currently receiving too many requests. Please wait a few seconds and try again. (Quota Exceeded)"
+        else:
+            yield "I am having trouble processing that right now. Please try again."
 
 def translate_text(text, target_language):
     if not API_KEY: return text

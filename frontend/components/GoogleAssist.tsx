@@ -44,7 +44,6 @@ export default function GoogleAssist() {
             "wikipedia": "https://www.wikipedia.org",
         };
 
-        // Check for direct website names or "open [website]"
         for (const [key, url] of Object.entries(websiteMap)) {
             if (lowerText.includes(key)) {
                 setAnswer(`Opening ${key}...`);
@@ -53,16 +52,35 @@ export default function GoogleAssist() {
             }
         }
 
-        // Search logic if it looks like a general search query but not a specific site match above ??
-        // For now, let's keep the user's request simple: "search youtube" -> opens youtube.
-
         setLoading(true);
         setAnswer('');
         try {
-            const res = await axios.post(`${API_BASE_URL}/ask-google`, { query: text }, {
-                headers: { 'Bypass-Tunnel-Reminder': 'true' }
+            const response = await fetch(`${API_BASE_URL}/ask-google`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
+                body: JSON.stringify({ query: text }),
             });
-            setAnswer(res.data.answer);
+
+            if (!response.ok) throw new Error('Network response was not ok');
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let accumulatedAnswer = '';
+
+            if (reader) {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    accumulatedAnswer += chunk;
+                    setAnswer(accumulatedAnswer);
+                }
+            }
+
             toast.success("Found an answer for you!", { icon: "💡" });
 
             // Save the discussion
@@ -70,21 +88,13 @@ export default function GoogleAssist() {
                 id: Date.now(),
                 date: new Date().toLocaleString(),
                 query: text,
-                answer: res.data.answer
+                answer: accumulatedAnswer
             };
             const existingDiscussions = JSON.parse(localStorage.getItem('savedDiscussions') || '[]');
             localStorage.setItem('savedDiscussions', JSON.stringify([newDiscussion, ...existingDiscussions]));
 
         } catch (err: any) {
             console.error("Google Assist Error:", err);
-            if (err.response) {
-                console.error("Response data:", err.response.data);
-                console.error("Response status:", err.response.status);
-            } else if (err.request) {
-                console.error("No response received:", err.request);
-            } else {
-                console.error("Error setting up request:", err.message);
-            }
             setAnswer('Sorry, I usually know the answer, but I cannot reach the server right now. Is the backend running?');
             toast.error("Failed to fetch answer.");
         } finally {
@@ -93,6 +103,15 @@ export default function GoogleAssist() {
     };
 
 
+
+    const stopListening = async () => {
+        try {
+            await SpeechRecognition.stop();
+        } catch (e) {
+            console.error("Error stopping voice recognition", e);
+        }
+        setIsListening(false);
+    };
 
     const startListening = async () => {
         // Try Capacitor Native Plugin first (for Android)
@@ -105,7 +124,7 @@ export default function GoogleAssist() {
             const { available } = await SpeechRecognition.available();
             if (available) {
                 setIsListening(true);
-                SpeechRecognition.start({
+                await SpeechRecognition.start({
                     language: "en-US",
                     maxResults: 1,
                     prompt: "Speak now...",
@@ -119,10 +138,10 @@ export default function GoogleAssist() {
                     }
                 });
 
-                // On Android, we might not get a clear 'end' event the same way, 
-                // but usually the listener or a final result handles it.
-                // For simplicity, we assume user stops speaking or hits the button to stop.
-
+                // Listening typically stops automatically on Android after the user is silent.
+                // We'll set a timeout or rely on the final result if possible.
+                // For a more robust native feel, we use the 'listeningState' if Capacitor supports it or just a timeout.
+                
                 return;
             }
         } catch (e) {
@@ -134,18 +153,32 @@ export default function GoogleAssist() {
             const WindowSpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
             const recognition = new WindowSpeechRecognition();
 
+            recognition.continuous = false;
+            recognition.interimResults = true;
+
             recognition.onstart = () => setIsListening(true);
-            recognition.onend = () => setIsListening(false);
+            recognition.onend = () => {
+                setIsListening(false);
+                // Trigger fetch automatically on end if query exists
+                if (query.trim()) {
+                    fetchAnswer(query);
+                }
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech recognition error", event.error);
+                setIsListening(false);
+                toast.error("Speech recognition failed. Please try again.");
+            };
 
             recognition.onresult = (event: any) => {
-                const transcript = event.results[0][0].transcript;
+                const transcript = event.results[event.results.length - 1][0].transcript;
                 setQuery(transcript);
-                fetchAnswer(transcript);
             };
 
             recognition.start();
         } else {
-            alert("Voice search is not supported in this browser.");
+            toast.error("Voice search is not supported in this browser.");
         }
     };
 
@@ -153,6 +186,13 @@ export default function GoogleAssist() {
         e.preventDefault();
         fetchAnswer(query);
     };
+
+    const suggestedQuestions = [
+        "How often should I water my tomatoes?",
+        "Best fertilizer for houseplants?",
+        "How to treat yellow leaves?",
+        "What plants grow well in shade?",
+    ];
 
     return (
         <div className="max-w-3xl mx-auto w-full">
@@ -166,7 +206,7 @@ export default function GoogleAssist() {
                 <p className="text-slate-600">Ask any question about plants, fertilizers, or diseases.</p>
             </div>
 
-            <form onSubmit={handleAsk} className="mb-8 relative z-10">
+            <form onSubmit={handleAsk} className="mb-4 relative z-10">
                 <div className="flex gap-2">
                     <input
                         type="text"
@@ -177,14 +217,14 @@ export default function GoogleAssist() {
                     />
                     <button
                         type="button"
-                        onClick={startListening}
+                        onClick={isListening ? stopListening : startListening}
                         className={`px-4 py-4 rounded-xl font-semibold transition-all shadow-sm ${isListening
                             ? "bg-red-50 text-red-600 animate-pulse border border-red-200"
                             : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"
                             }`}
-                        title="Voice Search"
+                        title={isListening ? "Stop Listening" : "Voice Search"}
                     >
-                        {isListening ? 'Listening...' : '🎤'}
+                        {isListening ? '🛑 Stop' : '🎤'}
                     </button>
                     <button
                         type="submit"
@@ -196,8 +236,30 @@ export default function GoogleAssist() {
                 </div>
             </form>
 
+            <div className="flex flex-wrap gap-2 mb-8 items-center justify-center">
+                {suggestedQuestions.map((q, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => {
+                            setQuery(q);
+                            fetchAnswer(q);
+                        }}
+                        className="px-3 py-1.5 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 text-slate-500 text-sm rounded-full border border-slate-200 hover:border-emerald-200 transition-all"
+                    >
+                        {q}
+                    </button>
+                ))}
+            </div>
+
             {answer && (
-                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 shadow-sm animate-fade-in relative overflow-hidden">
+                <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 shadow-sm animate-fade-in relative overflow-hidden group">
+                    <button 
+                        onClick={() => setAnswer('')}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Clear Answer"
+                    >
+                        ✕
+                    </button>
                     {/* Decorative blobs */}
                     <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-emerald-200/40 rounded-full blur-2xl"></div>
                     <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-teal-200/30 rounded-full blur-2xl"></div>

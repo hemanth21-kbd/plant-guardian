@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
 import uvicorn
@@ -48,9 +49,11 @@ class GoogleQuery(BaseModel):
     query: str
 
 @app.post("/ask-google")
-def ask_google(query: GoogleQuery):
-    response = gemini_client.ask_gemini(query.query)
-    return {"answer": response}
+async def ask_google(query: GoogleQuery):
+    return StreamingResponse(
+        gemini_client.stream_gemini(query.query),
+        media_type="text/event-stream"
+    )
 
 from fastapi import Form 
 
