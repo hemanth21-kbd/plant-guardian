@@ -8,5 +8,21 @@
 // Production Backend (Hugging Face) - Currently DOWN
 // export const API_BASE_URL = 'https://hemanth0821-plant-guardian-backend.hf.space';
 
-// Development / Real Time Running (Your Local Network IP Address)
-export const API_BASE_URL = 'http://10.122.142.244:8000';
+// Development / Real Time Running (Auto-detect Host)
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    
+    // If we're on a tunnel (like serveo), use the same host for the backend
+    if (hostname.includes('serveo.net') || hostname.includes('localtunnel.me') || hostname.includes('pinggy')) {
+        return `${protocol}//${window.location.host}`;
+    }
+    
+    // Default to LAN IP if on LAN, otherwise localhost
+    return `http://${hostname}:8000`;
+  }
+  return 'http://localhost:8000';
+};
+
+export const API_BASE_URL = getApiBaseUrl();

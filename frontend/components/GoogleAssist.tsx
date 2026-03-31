@@ -64,7 +64,10 @@ export default function GoogleAssist() {
                 body: JSON.stringify({ query: text }),
             });
 
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail || `Server responded with ${response.status}`);
+            }
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
@@ -81,7 +84,11 @@ export default function GoogleAssist() {
                 }
             }
 
-            toast.success("Found an answer for you!", { icon: "💡" });
+            if (!accumulatedAnswer) {
+                setAnswer("I'm sorry, I couldn't get a response from the AI. Please try again.");
+            } else {
+                toast.success("Found an answer for you!", { icon: "💡" });
+            }
 
             // Save the discussion
             const newDiscussion = {
@@ -95,7 +102,14 @@ export default function GoogleAssist() {
 
         } catch (err: any) {
             console.error("Google Assist Error:", err);
-            setAnswer('Sorry, I usually know the answer, but I cannot reach the server right now. Is the backend running?');
+            setAnswer(`**Connection Error:** I cannot reach the server at \`${API_BASE_URL}\`. 
+
+Please make sure:
+1. The backend server is running (\`run.bat\`).
+2. Your device is on the same network as the server.
+3. The API URL in settings/config is correct.
+
+*Technical detail: ${err.message}*`);
             toast.error("Failed to fetch answer.");
         } finally {
             setLoading(false);

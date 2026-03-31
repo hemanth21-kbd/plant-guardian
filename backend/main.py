@@ -29,7 +29,7 @@ app.add_middleware(
     allow_origins=["*"],  # Allow ALL origins (for now, to fix tunnel issues)
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Bypass-Tunnel-Reminder", "Authorization", "Accept"],
     expose_headers=["*"],
 )
 
