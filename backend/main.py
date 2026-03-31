@@ -48,14 +48,14 @@ class GoogleQuery(BaseModel):
     query: str
 
 @app.post("/ask-google")
-async def ask_google(query: GoogleQuery):
+def ask_google(query: GoogleQuery):
     response = gemini_client.ask_gemini(query.query)
     return {"answer": response}
 
 from fastapi import Form 
 
 @app.post("/predict", response_model=schemas.PredictionResult)
-async def predict_disease(
+def predict_disease(
     file: UploadFile = File(...), 
     language: str = Form("en"),
     db: Session = Depends(get_db)

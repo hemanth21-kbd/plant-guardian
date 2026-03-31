@@ -137,8 +137,8 @@ def ask_gemini(query):
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
     
     try:
-        # Use gemini-1.5-flash which is explicitly optimized for speed
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Use gemini-flash-latest (supported by the local older SDK)
+        model = genai.GenerativeModel('gemini-flash-latest')
         # Instructing the AI to be extremely concise immediately speeds up text generation
         fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Here is the user's message: {query}"
         
