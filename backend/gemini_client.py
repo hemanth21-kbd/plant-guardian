@@ -51,7 +51,7 @@ def try_google_gemini(image_path):
     
     try:
         # Prepare the model
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         
         # Load image
         with open(image_path, "rb") as f:
@@ -137,8 +137,8 @@ def ask_gemini(query):
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
     
     try:
-        # Use gemini-flash-latest (supported by the local older SDK)
-        model = genai.GenerativeModel('gemini-flash-latest')
+        # Use gemini-2.0-flash (supported by the local older SDK)
+        model = genai.GenerativeModel('gemini-2.0-flash')
         # Instructing the AI to be extremely concise immediately speeds up text generation
         fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Here is the user's message: {query}"
         
@@ -157,7 +157,7 @@ def translate_text(text, target_language):
     if not API_KEY: return text
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         prompt = f"Translate the following JSON content to {target_language}. Return ONLY the JSON with translated values, keeping keys and structure exactly the same: {text}"
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
@@ -169,7 +169,7 @@ def get_disease_info(plant_name, disease_name):
     if not API_KEY: return None
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         prompt = f"Provide detailed information about {disease_name} in {plant_name}. Return JSON with keys: description, prevention, treatment."
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
