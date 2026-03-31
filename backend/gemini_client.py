@@ -137,8 +137,16 @@ def ask_gemini(query):
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        response = model.generate_content(query)
+        # Use gemini-1.5-flash which is explicitly optimized for speed
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Instructing the AI to be extremely concise immediately speeds up text generation
+        fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Here is the user's message: {query}"
+        
+        # Max output tokens limit cuts off rambling, returning the response instantly
+        response = model.generate_content(
+            fast_prompt, 
+            generation_config={"max_output_tokens": 150}
+        )
         return response.text
     except Exception as e:
         print(f"Chat Error: {e}")
