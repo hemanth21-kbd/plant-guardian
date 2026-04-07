@@ -43,7 +43,7 @@ def get_db():
 
 @app.get("/")
 def read_root():
-    return {"message": "Plant Disease Detection API is running"}
+    return {"message": "Plant Disease Detection API is running (TEST 2)"}
 
 class GoogleQuery(BaseModel):
     query: str
