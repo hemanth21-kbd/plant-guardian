@@ -24,4 +24,4 @@ const getApiBaseUrl = () => {
   return 'http://localhost:8000';
 };
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_RENDER_API_URL || getApiBaseUrl();
+export const API_BASE_URL = 'https://plant-guardian-backend.onrender.com';
