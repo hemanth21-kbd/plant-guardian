@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-API_KEY = os.getenv("GOOGLE_API_KEY")
+API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 HF_API_KEY = os.getenv("HF_API_KEY") # Optional: Add if you have one
 
 def analyze_plant_disease(image_path):
