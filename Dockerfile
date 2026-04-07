@@ -27,7 +27,10 @@ COPY --chown=user . /home/user/app
 RUN mkdir -p /home/user/app/backend/uploads && chmod 777 /home/user/app/backend/uploads
 RUN touch /home/user/app/plants.db && chmod 777 /home/user/app/plants.db
 
+# Default Render port
+ENV PORT=10000
+
 USER user
 
-# Use the exact module path HF expects
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "1"]
+# Use the environment variable for PORT
+CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT} --workers 1

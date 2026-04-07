@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: plant-guardian-backend
+    env: docker
+    plan: free
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false # The user will need to input this manually in the Render Dashboard
+      - key: PORT
+        value: 10000

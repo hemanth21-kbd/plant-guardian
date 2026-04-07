@@ -5,10 +5,9 @@
 // IMPORTANT: For a Real Android Device, change this to your PC's IP address (e.g., 'http://192.168.1.5:8000')
 // For local web development, 'http://localhost:8000' works fine.
 
-// Production Backend (Hugging Face) - Currently DOWN
-// export const API_BASE_URL = 'https://hemanth0821-plant-guardian-backend.hf.space';
-
-// Development / Real Time Running (Auto-detect Host)
+// Production Backend
+// IMPORTANT: Once you deploy to Render, paste your Render URL here:
+// Example: export const API_BASE_URL = 'https://plant-guardian-backend-xxx.onrender.com';
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
@@ -25,4 +24,4 @@ const getApiBaseUrl = () => {
   return 'http://localhost:8000';
 };
 
-export const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = process.env.NEXT_PUBLIC_RENDER_API_URL || getApiBaseUrl();

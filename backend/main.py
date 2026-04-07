@@ -236,7 +236,7 @@ async def upload_image(file: UploadFile = File(...)):
     with open(file_location, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    return {"url": f"http://127.0.0.1:8000/uploads/{file.filename}"}
+    return {"url": f"/uploads/{file.filename}"}
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
