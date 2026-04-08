@@ -77,20 +77,33 @@ def predict_disease(
              # Fallback to a mock result if Gemini fails completely
              gemini_result = gemini_client.get_mock_result()
 
+        # Handle potentially stringified 'details' from Gemini
+        details_data = gemini_result.get("details", {})
+        if isinstance(details_data, str):
+            import json
+            try:
+                details_data = json.loads(details_data)
+            except:
+                details_data = {
+                    "description": details_data,
+                    "prevention": "Check plant health closely.",
+                    "treatment": "Provide general care."
+                }
+                
         # Map Gemini result to response schema
         final_result = schemas.PredictionResult(
             plant_name=gemini_result.get("plant_name", "Unknown"),
             disease_name=gemini_result.get("disease_name", "Healthy"),
-            confidence=gemini_result.get("confidence", 0.9),
+            confidence=float(gemini_result.get("confidence", 0.9)),
             details=schemas.DiseaseBase(
                 name=gemini_result.get("disease_name", "Healthy"),
                 severity="Moderate",
-                symptoms=gemini_result.get("details", {}).get("description", "No symptoms found."),
-                prevention=gemini_result.get("details", {}).get("prevention", "No prevention info."),
+                symptoms=details_data.get("description", "No symptoms found.") if isinstance(details_data, dict) else "No symptoms found.",
+                prevention=details_data.get("prevention", "No prevention info.") if isinstance(details_data, dict) else "No prevention info.",
                 treatments=[
                     schemas.TreatmentBase(
                         type="General",
-                        description=gemini_result.get("details", {}).get("treatment", "No treatment info."),
+                        description=details_data.get("treatment", "No treatment info.") if isinstance(details_data, dict) else "No treatment info.",
                         cost_approx="Varies"
                     )
                 ]

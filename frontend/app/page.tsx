@@ -41,6 +41,9 @@ export default function Home() {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   useEffect(() => {
+    // Wake up the backend server immediately in case Render put it to sleep
+    fetch(`${API_BASE_URL}/`).catch(() => {});
+
     // Check for existing state
     const storedPlants = localStorage.getItem('selectedPlants');
 
@@ -50,6 +53,12 @@ export default function Home() {
     } else {
       setView('selection');
     }
+
+    // Optional Keep-Alive local interval (pings every 10 minutes while app is open)
+    const keepAlive = setInterval(() => {
+        fetch(`${API_BASE_URL}/`).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(keepAlive);
   }, []);
 
   const handleSelectionComplete = (plants: string[]) => {
@@ -71,7 +80,6 @@ export default function Home() {
       formData.append("language", language);
       const response = await axios.post(`${API_BASE_URL}/predict`, formData, {
         headers: {
-          "Content-Type": "multipart/form-data",
           "Bypass-Tunnel-Reminder": "true"
         },
       });
