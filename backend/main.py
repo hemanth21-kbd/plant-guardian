@@ -63,7 +63,8 @@ def predict_disease(
     language: str = Form("en"),
     db: Session = Depends(get_db)
 ):
-    temp_file = f"temp_{file.filename}"
+    import tempfile
+    temp_file = os.path.join(tempfile.gettempdir(), f"temp_{file.filename}")
     try:
         # Save temp file
         with open(temp_file, "wb") as buffer:
