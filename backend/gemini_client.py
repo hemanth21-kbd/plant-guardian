@@ -10,7 +10,7 @@ load_dotenv()
 
 
 # Hardcoded using concatenation to prevent GitHub auto-revocation and fix Render env issues permanently
-API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ("AIzaSyD-F" + "ASiAyBJZWRv0" + "9xFPWJEjuT" + "M1HCIbFo")
+API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ("AIzaSyBnMHZgZgn1x71iKDkOd6Pd3ayVMYRCQLE")
 HF_API_KEY = os.getenv("HF_API_KEY") # Optional: Add if you have one
 
 def analyze_plant_disease(image_path):
@@ -52,7 +52,7 @@ def try_google_gemini(image_path):
     
     try:
         # Prepare the model
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         
         # Load image
         with open(image_path, "rb") as f:
@@ -138,8 +138,8 @@ def ask_gemini(query):
     if not API_KEY: return "AI Service Unavailable (Key Missing)"
     
     try:
-        # Use gemini-2.0-flash (supported by the local older SDK)
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        # Use gemini-flash-latest (supported by the local older SDK)
+        model = genai.GenerativeModel('gemini-flash-latest')
         # Instructing the AI to be extremely concise immediately speeds up text generation
         fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Focus on plant care. Here is the user's message: {query}"
         
@@ -161,7 +161,7 @@ def stream_gemini(query):
         return
 
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         fast_prompt = f"You are Plant Guardian, a highly knowledgeable and responsive AI assistant. Your goal is to provide immediate, actionable advice on plant care, disease diagnosis, and cultivation. Keep your answers clear, professional, and helpful. User message: {query}"
         
         response = model.generate_content(
@@ -184,7 +184,7 @@ def translate_text(text, target_language):
     if not API_KEY: return text
     
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         prompt = f"Translate the following JSON content to {target_language}. Return ONLY the JSON with translated values, keeping keys and structure exactly the same: {text}"
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
@@ -196,7 +196,7 @@ def get_disease_info(plant_name, disease_name):
     if not API_KEY: return None
     
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-flash-latest')
         prompt = f"Provide detailed information about {disease_name} in {plant_name}. Return JSON with keys: description, prevention, treatment."
         
         response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})

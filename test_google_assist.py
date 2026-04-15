@@ -12,7 +12,7 @@ try:
     if response.status_code == 200:
         print("\nSUCCESS: Received response from Google Assist:")
         print("-" * 50)
-        print(response.json().get("answer"))
+        print(response.text)
         print("-" * 50)
     else:
         print(f"\nFAILURE: Status Code {response.status_code}")

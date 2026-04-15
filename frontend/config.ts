@@ -13,15 +13,27 @@ const getApiBaseUrl = () => {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
     
+    // Determine if we are running inside Android Capacitor (usually localhost or similar)
+    const isCapacitor = window.hasOwnProperty('Capacitor') || protocol === 'capacitor:';
+
     // If we're on a tunnel (like serveo), use the same host for the backend
     if (hostname.includes('serveo.net') || hostname.includes('localtunnel.me') || hostname.includes('pinggy')) {
         return `${protocol}//${window.location.host}`;
     }
     
-    // Default to LAN IP if on LAN, otherwise localhost
+    // If we are on Android/Capacitor, localhost refers to the phone itself. 
+    // We MUST use the PC's actual LAN IP to reach the backend.
+    if (isCapacitor || hostname === 'localhost') {
+        // Use the actual LAN IP of the computer running the server
+        return `http://10.44.99.244:8000`;
+    }
+
+    // Default LAN IP fallback
     return `http://${hostname}:8000`;
   }
-  return 'http://localhost:8000';
+  // Default server-side
+  return 'http://10.44.99.244:8000';
 };
 
-export const API_BASE_URL = 'https://plant-guardian-backend.onrender.com';
+// Always use the dynamic URL to prevent mobile offline errors
+export const API_BASE_URL = getApiBaseUrl();

@@ -63,12 +63,12 @@ def predict_disease(
     language: str = Form("en"),
     db: Session = Depends(get_db)
 ):
-    # Save temp file
     temp_file = f"temp_{file.filename}"
-    with open(temp_file, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-    
     try:
+        # Save temp file
+        with open(temp_file, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
         # PURE AI DIAGNOSIS (No local model to save RAM and build time)
         print(f"Analyzing plant health with Gemini AI (Language: {language})...")
         gemini_result = gemini_client.try_google_gemini(temp_file)
@@ -117,10 +117,6 @@ def predict_disease(
                     text=final_result.model_dump_json(),
                     target_language=language
                 )
-                # Parse back to object purely for structure or return raw dict?
-                # Ideally, schema validation might fail if keys are translated.
-                # We need to ask Gemini to ONLY translate specific value fields, OR
-                # we pass the JSON and ask it to return the SAME JSON structure but with translated content values.
                 import json
                 translated_json = json.loads(translated_text)
                 final_result = schemas.PredictionResult(**translated_json)
@@ -129,6 +125,21 @@ def predict_disease(
 
         return final_result
         
+    except Exception as e:
+        print(f"CRITICAL PREDICT FAULT: {str(e)}")
+        # Safe fallback so we NEVER return a 500 error that breaks CORS
+        return schemas.PredictionResult(
+            plant_name="Error in Backend",
+            disease_name="Server Processing Failed",
+            confidence=0.0,
+            details=schemas.DiseaseBase(
+                name="Server Fault",
+                severity="Critical",
+                symptoms=f"Error: {str(e)}",
+                prevention="Redeploy or check Logs on Render.",
+                treatments=[schemas.TreatmentBase(type="General", description="Contact administrator", cost_approx="N/A")]
+            )
+        )
     finally:
         if os.path.exists(temp_file):
             os.remove(temp_file)
