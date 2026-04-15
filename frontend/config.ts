@@ -35,5 +35,6 @@ const getApiBaseUrl = () => {
   return 'http://10.44.99.244:8000';
 };
 
-// Always use the dynamic URL to prevent mobile offline errors
-export const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://plant-guardian-backend.onrender.com'
+  : getApiBaseUrl();
