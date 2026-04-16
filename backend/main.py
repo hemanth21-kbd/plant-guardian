@@ -12,7 +12,7 @@ import hashlib
 import time
 import random
 
-from . import models, schemas, database, gemini_client, places_service
+from . import models, schemas, database, groq_client, places_service
 
 try:
     models.Base.metadata.create_all(bind=database.engine)
@@ -55,7 +55,7 @@ class GoogleQuery(BaseModel):
 @app.post("/ask-google")
 async def ask_google(query: GoogleQuery):
     return StreamingResponse(
-        gemini_client.stream_gemini(query.query),
+        groq_client.stream_groq(query.query),
         media_type="text/event-stream"
     )
 
@@ -74,13 +74,13 @@ def predict_disease(
         with open(temp_file, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # PURE AI DIAGNOSIS (No local model to save RAM and build time)
-        print(f"Analyzing plant health with Gemini AI (Language: {language})...")
-        gemini_result = gemini_client.try_google_gemini(temp_file)
+        # AI DIAGNOSIS using Groq
+        print(f"Analyzing plant health with Groq AI (Language: {language})...")
+        gemini_result = groq_client.try_groq_vision(temp_file)
         
         if not gemini_result:
-             # Fallback to a mock result if Gemini fails completely
-             gemini_result = gemini_client.get_mock_result()
+             # Fallback to a mock result if Groq fails
+             gemini_result = groq_client.get_mock_result()
 
         # Handle potentially stringified 'details' from Gemini
         details_data = gemini_result.get("details", {})
@@ -118,7 +118,7 @@ def predict_disease(
         # Translation Logic
         if language and language != 'en':
             try:
-                translated_text = gemini_client.translate_text(
+                translated_text = groq_client.translate_text(
                     text=final_result.model_dump_json(),
                     target_language=language
                 )
