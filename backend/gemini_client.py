@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# Hardcoded using concatenation to prevent GitHub auto-revocation and fix Render env issues permanently
-API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ("AIzaSyBnMHZgZgn1x71iKDkOd6Pd3ayVMYRCQLE")
+# Please configure GOOGLE_API_KEY in your .env file or Render Environment Variables!
+# Do NOT hardcode the key here, it will be automatically revoked by GitHub!
+API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 HF_API_KEY = os.getenv("HF_API_KEY") # Optional: Add if you have one
 
 def analyze_plant_disease(image_path):
