@@ -14,40 +14,6 @@ interface Market {
     type: string;
 }
 
-const DAILY_PRICES = [
-    { id: 1, category: "Vegetables", items: [
-        { "name": "Tomato", "variety": "Hybrid", "price": "₹35 / kg", "trend": "up", "change": "+₹2" },
-        { "name": "Onion", "variety": "Red Big", "price": "₹28 / kg", "trend": "stable", "change": "0" },
-        { "name": "Potato", "variety": "Regular", "price": "₹22 / kg", "trend": "down", "change": "-₹1" },
-        { "name": "Cauliflower", "variety": "Medium", "price": "₹40 / pc", "trend": "up", "change": "+₹5" },
-        { "name": "Carrot", "variety": "Ooty Red", "price": "₹45 / kg", "trend": "stable", "change": "0" },
-        { "name": "Cabbage", "variety": "Green", "price": "₹30 / kg", "trend": "down", "change": "-₹3" },
-        { "name": "Spinach", "variety": "Local", "price": "₹15 / bunch", "trend": "stable", "change": "0" },
-        { "name": "Garlic", "variety": "White", "price": "₹180 / kg", "trend": "up", "change": "+₹10" },
-        { "name": "Ginger", "variety": "Fresh", "price": "₹120 / kg", "trend": "stable", "change": "0" },
-        { "name": "Capsicum", "variety": "Green", "price": "₹60 / kg", "trend": "down", "change": "-₹5" },
-        { "name": "Brinjal", "variety": "Purple Long", "price": "₹40 / kg", "trend": "up", "change": "+₹2" },
-        { "name": "Green Chilli", "variety": "Medium Spicy", "price": "₹80 / kg", "trend": "up", "change": "+₹5" },
-    ] },
-    { id: 2, category: "Fruits", items: [
-        { "name": "Apple", "variety": "Fuji", "price": "₹140 / kg", "trend": "stable", "change": "0" },
-        { "name": "Banana", "variety": "Robusta", "price": "₹45 / dozen", "trend": "up", "change": "+₹3" },
-        { "name": "Mango", "variety": "Alphonso", "price": "₹350 / dozen", "trend": "down", "change": "-₹20" },
-        { "name": "Orange", "variety": "Nagpur", "price": "₹80 / kg", "trend": "stable", "change": "0" },
-        { "name": "Grapes", "variety": "Seedless Green", "price": "₹90 / kg", "trend": "up", "change": "+₹5" },
-        { "name": "Papaya", "variety": "Red Lady", "price": "₹40 / kg", "trend": "down", "change": "-₹5" },
-        { "name": "Watermelon", "variety": "Kiran", "price": "₹25 / kg", "trend": "stable", "change": "0" },
-        { "name": "Pomegranate", "variety": "Bhagwa", "price": "₹150 / kg", "trend": "up", "change": "+₹10" },
-    ] },
-    { id: 3, category: "Flowers", items: [
-        { "name": "Rose", "variety": "Red Local", "price": "₹120 / bundle", "trend": "up", "change": "+₹10" },
-        { "name": "Marigold", "variety": "Orange", "price": "₹60 / kg", "trend": "stable", "change": "0" },
-        { "name": "Jasmine", "variety": "Mogra", "price": "₹300 / kg", "trend": "up", "change": "+₹20" },
-        { "name": "Lotus", "variety": "Pink", "price": "₹15 / pc", "trend": "stable", "change": "0" },
-        { "name": "Orchid", "variety": "Purple", "price": "₹400 / bunch", "trend": "down", "change": "-₹20" },
-    ] }
-];
-
 export default function Market() {
     const [activeTab, setActiveTab] = useState<'prices' | 'nearby'>('prices');
     const [searchTerm, setSearchTerm] = useState('');
@@ -58,16 +24,6 @@ export default function Market() {
     const [location, setLocation] = useState<{lat: number; lon: number} | null>(null);
 
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    const cleanSearch = searchTerm.trim().toLowerCase();
-
-    const totalMatches = DAILY_PRICES.reduce((acc, category) => {
-        if (!cleanSearch) return acc + category.items.length;
-        return acc + category.items.filter(item =>
-            item.name.toLowerCase().includes(cleanSearch) ||
-            item.variety.toLowerCase().includes(cleanSearch) ||
-            category.category.toLowerCase().includes(cleanSearch)
-        ).length;
-    }, 0);
 
     useEffect(() => {
         getUserLocation();
@@ -102,29 +58,29 @@ export default function Market() {
         }
     };
 
-    useEffect(() => {
-        if (cleanSearch.length > 2 && totalMatches === 0) {
-            const delayDebounceFn = setTimeout(async () => {
-                setAiLoading(true);
-                setAiResult('');
-                try {
-                    const res = await axios.post(`${API_BASE_URL}/ask-google`, { query: `What is the current market price or mandi rate of ${searchTerm} in India? Make it short and clear.` }, {
-                        headers: { 'Bypass-Tunnel-Reminder': 'true' }
-                    });
-                    setAiResult(res.data.answer);
-                } catch (err: any) {
-                    setAiResult("Sorry, I couldn't fetch the price from the assistant right now.");
-                } finally {
-                    setAiLoading(false);
-                }
-            }, 1000);
-
-            return () => clearTimeout(delayDebounceFn);
-        } else {
-            setAiResult('');
+    const searchLivePrice = async () => {
+        if (!searchTerm.trim() || searchTerm.length < 2) return;
+        setAiLoading(true);
+        setAiResult('');
+        
+        try {
+            const res = await axios.get(`${API_BASE_URL}/places/live-price`, {
+                params: { comparison: searchTerm },
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
+            
+            if (res.data.price_data) {
+                const pd = res.data.price_data;
+                setAiResult(`**${res.data.commodity}**\n\n💰 Price: ₹${pd.price || 'Varies'}/${pd.unit || 'kg'}\n📍 Market: ${pd.market || 'Various'}\n📈 Trend: ${pd.trend || 'Stable'}`);
+            } else {
+                setAiResult("Unable to fetch live price. Please try again.");
+            }
+        } catch (error) {
+            setAiResult("Failed to fetch price. Please try again.");
+        } finally {
             setAiLoading(false);
         }
-    }, [searchTerm, totalMatches]);
+    };
 
     return (
         <div className="flex flex-col h-full bg-[#f0f9ff] text-slate-800 font-sans pb-6">
@@ -137,7 +93,7 @@ export default function Market() {
                         onClick={() => setActiveTab('prices')}
                         className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'prices' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        Daily Prices
+                        Live Prices
                     </button>
                     <button
                         onClick={() => setActiveTab('nearby')}
@@ -167,7 +123,7 @@ export default function Market() {
                         <div className="flex items-center justify-between px-2">
                             <h3 className="font-bold text-slate-800">Markets within 10 km</h3>
                             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                                {markets.length > 0 ? markets.length : "Using nearby data"}
+                                {markets.length} Found
                             </span>
                         </div>
 
@@ -202,7 +158,7 @@ export default function Market() {
                             )) : (
                                 <div className="text-center py-8 text-slate-500">
                                     <p>No markets found nearby.</p>
-                                    <p className="text-xs mt-2">Prices shown are from nearby mandis.</p>
+                                    <p className="text-xs mt-2">Search for prices instead.</p>
                                 </div>
                             )}
                         </div>
@@ -211,83 +167,48 @@ export default function Market() {
 
                 {activeTab === 'prices' && (
                     <div className="space-y-6 animate-fade-in">
-                        <div className="relative">
+                        <div className="relative flex gap-2">
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search crops, fruits, flowers..."
-                                className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                                onKeyDown={(e) => e.key === 'Enter' && searchLivePrice()}
+                                placeholder="Search crops, fruits, vegetables (e.g., Tomato, Onion)..."
+                                className="flex-1 bg-white border border-slate-200 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
                             />
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 absolute left-3 top-3.5 text-slate-400">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                            </svg>
+                            <button
+                                onClick={searchLivePrice}
+                                disabled={aiLoading || searchTerm.length < 2}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold text-sm disabled:opacity-50"
+                            >
+                                {aiLoading ? '...' : 'Search'}
+                            </button>
                         </div>
 
-                        {DAILY_PRICES.map(category => {
-                            const filteredItems = cleanSearch ? category.items.filter(item =>
-                                item.name.toLowerCase().includes(cleanSearch) ||
-                                item.variety.toLowerCase().includes(cleanSearch) ||
-                                category.category.toLowerCase().includes(cleanSearch)
-                            ) : category.items;
+                        {aiLoading && (
+                            <div className="flex justify-center items-center gap-2 p-4 bg-blue-50 rounded-xl">
+                                <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                                <span className="text-blue-600 font-medium">Fetching live prices...</span>
+                            </div>
+                        )}
 
-                            if (filteredItems.length === 0) return null;
-
-                            return (
-                                <div key={category.id} className="space-y-3">
-                                    <h3 className="font-bold text-slate-800 border-l-4 border-blue-500 pl-3">{category.category} Mandi Rates</h3>
-                                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                                        {filteredItems.map((item, index) => (
-                                            <div key={index} className="flex justify-between items-center p-4 border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-slate-800 text-sm">{item.name}</span>
-                                                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{item.variety}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-col items-end">
-                                                    <span className="font-bold text-slate-900 text-sm">{item.price}</span>
-                                                    <div className={`flex items-center gap-1 text-[10px] font-bold ${item.trend === 'up' ? 'text-red-500' : item.trend === 'down' ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                                        {item.trend === 'up' && <span>↑</span>}
-                                                        {item.trend === 'down' && <span>↓</span>}
-                                                        {item.change !== "0" && <span>{item.change}</span>}
-                                                        {item.change === "0" && <span>Stable</span>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {searchTerm && totalMatches === 0 && (
-                            <div className="mt-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl shadow-sm text-center animate-fade-in relative overflow-hidden">
-                                <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-indigo-200/40 rounded-full blur-2xl"></div>
-                                <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-blue-200/30 rounded-full blur-2xl"></div>
-
-                                <div className="relative z-10">
-                                    <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
-                                        <AILogo className="w-6 h-6 text-indigo-500" />
-                                    </div>
-                                    <h3 className="font-bold text-slate-800 mb-1">Not in local records</h3>
-                                    <p className="text-xs text-slate-500 mb-4">Let me check the web for the latest rates...</p>
-
-                                    {aiLoading && (
-                                        <div className="flex justify-center items-center gap-2 text-sm text-indigo-600 font-medium">
-                                            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                                            Searching live rates for "{searchTerm}"...
-                                        </div>
-                                    )}
-
-                                    {!aiLoading && aiResult && (
-                                        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-indigo-100/50 text-left prose prose-sm max-w-none text-slate-700 font-medium shadow-sm">
-                                            <ReactMarkdown>{aiResult}</ReactMarkdown>
-                                        </div>
-                                    )}
+                        {aiResult && (
+                            <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-sm">
+                                <div className="prose prose-sm max-w-none">
+                                    <ReactMarkdown>{aiResult}</ReactMarkdown>
                                 </div>
                             </div>
                         )}
+
+                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100">
+                            <div className="flex items-center gap-3 mb-2">
+                                <AILogo className="w-6 h-6 text-blue-600" />
+                                <span className="font-bold text-slate-800">Live Market Prices</span>
+                            </div>
+                            <p className="text-sm text-slate-600">
+                                Search for any crop, fruit, or vegetable to get real-time prices from Indian markets via AI!
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
