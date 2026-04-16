@@ -5,441 +5,47 @@ import ReactMarkdown from 'react-markdown';
 import { API_BASE_URL } from '../config';
 import AILogo from './icons/AILogo';
 
-// Mock list of nearby markets
-const NEARBY_MARKETS = [
-    { id: 1, name: "Central APMC Market", distance: "2.4 km", status: "Open Now", closesAt: "9:00 PM", type: "Wholesale", query: "Central+APMC+Market" },
-    { id: 2, name: "Green Valley Farmers Market", distance: "4.1 km", status: "Open Now", closesAt: "7:00 PM", type: "Retail & Wholesale", query: "Farmers+Market" },
-    { id: 3, name: "City Center Agro Hub", distance: "7.8 km", status: "Closed", closesAt: "Opens 5:00 AM", type: "Wholesale", query: "APMC+Market" },
-];
+interface Market {
+    id: number;
+    name: string;
+    distance: string;
+    lat: number;
+    lon: number;
+    type: string;
+}
 
-// Mock daily prices
 const DAILY_PRICES = [
     { id: 1, category: "Vegetables", items: [
-        {
-                "name": "Tomato",
-                "variety": "Hybrid",
-                "price": "₹35 / kg",
-                "trend": "up",
-                "change": "+₹2"
-        },
-        {
-                "name": "Onion",
-                "variety": "Red Big",
-                "price": "₹28 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Potato",
-                "variety": "Regular",
-                "price": "₹22 / kg",
-                "trend": "down",
-                "change": "-₹1"
-        },
-        {
-                "name": "Cauliflower",
-                "variety": "Medium",
-                "price": "₹40 / pc",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Carrot",
-                "variety": "Ooty Red",
-                "price": "₹45 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Cabbage",
-                "variety": "Green",
-                "price": "₹30 / kg",
-                "trend": "down",
-                "change": "-₹3"
-        },
-        {
-                "name": "Spinach",
-                "variety": "Local",
-                "price": "₹15 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Garlic",
-                "variety": "White",
-                "price": "₹180 / kg",
-                "trend": "up",
-                "change": "+₹10"
-        },
-        {
-                "name": "Ginger",
-                "variety": "Fresh",
-                "price": "₹120 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Capsicum",
-                "variety": "Green",
-                "price": "₹60 / kg",
-                "trend": "down",
-                "change": "-₹5"
-        },
-        {
-                "name": "Brinjal",
-                "variety": "Purple Long",
-                "price": "₹40 / kg",
-                "trend": "up",
-                "change": "+₹2"
-        },
-        {
-                "name": "Ladies Finger",
-                "variety": "Green",
-                "price": "₹45 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Bottle Gourd",
-                "variety": "Medium",
-                "price": "₹25 / pc",
-                "trend": "down",
-                "change": "-₹2"
-        },
-        {
-                "name": "Bitter Gourd",
-                "variety": "Dark Green",
-                "price": "₹50 / kg",
-                "trend": "up",
-                "change": "+₹4"
-        },
-        {
-                "name": "Cucumber",
-                "variety": "Local",
-                "price": "₹35 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Green Chilli",
-                "variety": "Medium Spicy",
-                "price": "₹80 / kg",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Beetroot",
-                "variety": "Red",
-                "price": "₹50 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Radish",
-                "variety": "White",
-                "price": "₹30 / kg",
-                "trend": "down",
-                "change": "-₹2"
-        },
-        {
-                "name": "Lemon",
-                "variety": "Yellow",
-                "price": "₹60 / kg",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Pumpkin",
-                "variety": "Yellow",
-                "price": "₹25 / kg",
-                "trend": "stable",
-                "change": "0"
-        }
-] },
+        { "name": "Tomato", "variety": "Hybrid", "price": "₹35 / kg", "trend": "up", "change": "+₹2" },
+        { "name": "Onion", "variety": "Red Big", "price": "₹28 / kg", "trend": "stable", "change": "0" },
+        { "name": "Potato", "variety": "Regular", "price": "₹22 / kg", "trend": "down", "change": "-₹1" },
+        { "name": "Cauliflower", "variety": "Medium", "price": "₹40 / pc", "trend": "up", "change": "+₹5" },
+        { "name": "Carrot", "variety": "Ooty Red", "price": "₹45 / kg", "trend": "stable", "change": "0" },
+        { "name": "Cabbage", "variety": "Green", "price": "₹30 / kg", "trend": "down", "change": "-₹3" },
+        { "name": "Spinach", "variety": "Local", "price": "₹15 / bunch", "trend": "stable", "change": "0" },
+        { "name": "Garlic", "variety": "White", "price": "₹180 / kg", "trend": "up", "change": "+₹10" },
+        { "name": "Ginger", "variety": "Fresh", "price": "₹120 / kg", "trend": "stable", "change": "0" },
+        { "name": "Capsicum", "variety": "Green", "price": "₹60 / kg", "trend": "down", "change": "-₹5" },
+        { "name": "Brinjal", "variety": "Purple Long", "price": "₹40 / kg", "trend": "up", "change": "+₹2" },
+        { "name": "Green Chilli", "variety": "Medium Spicy", "price": "₹80 / kg", "trend": "up", "change": "+₹5" },
+    ] },
     { id: 2, category: "Fruits", items: [
-        {
-                "name": "Apple",
-                "variety": "Fuji",
-                "price": "₹140 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Banana",
-                "variety": "Robusta",
-                "price": "₹45 / dozen",
-                "trend": "up",
-                "change": "+₹3"
-        },
-        {
-                "name": "Mango",
-                "variety": "Alphonso",
-                "price": "₹350 / dozen",
-                "trend": "down",
-                "change": "-₹20"
-        },
-        {
-                "name": "Orange",
-                "variety": "Nagpur",
-                "price": "₹80 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Grapes",
-                "variety": "Seedless Green",
-                "price": "₹90 / kg",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Papaya",
-                "variety": "Red Lady",
-                "price": "₹40 / kg",
-                "trend": "down",
-                "change": "-₹5"
-        },
-        {
-                "name": "Watermelon",
-                "variety": "Kiran",
-                "price": "₹25 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Pomegranate",
-                "variety": "Bhagwa",
-                "price": "₹150 / kg",
-                "trend": "up",
-                "change": "+₹10"
-        },
-        {
-                "name": "Pineapple",
-                "variety": "Queen",
-                "price": "₹60 / pc",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Guava",
-                "variety": "Allahabad Safeda",
-                "price": "₹50 / kg",
-                "trend": "down",
-                "change": "-₹5"
-        },
-        {
-                "name": "Kiwi",
-                "variety": "Zespri",
-                "price": "₹120 / pack",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Strawberry",
-                "variety": "Mahabaleshwar",
-                "price": "₹80 / box",
-                "trend": "up",
-                "change": "+₹10"
-        },
-        {
-                "name": "Sweet Lime",
-                "variety": "Mosambi",
-                "price": "₹60 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Custard Apple",
-                "variety": "Balanagar",
-                "price": "₹100 / kg",
-                "trend": "down",
-                "change": "-₹10"
-        },
-        {
-                "name": "Sapota",
-                "variety": "Chikoo",
-                "price": "₹60 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Pear",
-                "variety": "Babugosha",
-                "price": "₹120 / kg",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Dragon Fruit",
-                "variety": "Red",
-                "price": "₹90 / pc",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Plum",
-                "variety": "Red",
-                "price": "₹150 / kg",
-                "trend": "down",
-                "change": "-₹10"
-        },
-        {
-                "name": "Peach",
-                "variety": "Local",
-                "price": "₹130 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Fig",
-                "variety": "Fresh",
-                "price": "₹180 / kg",
-                "trend": "up",
-                "change": "+₹15"
-        }
-] },
+        { "name": "Apple", "variety": "Fuji", "price": "₹140 / kg", "trend": "stable", "change": "0" },
+        { "name": "Banana", "variety": "Robusta", "price": "₹45 / dozen", "trend": "up", "change": "+₹3" },
+        { "name": "Mango", "variety": "Alphonso", "price": "₹350 / dozen", "trend": "down", "change": "-₹20" },
+        { "name": "Orange", "variety": "Nagpur", "price": "₹80 / kg", "trend": "stable", "change": "0" },
+        { "name": "Grapes", "variety": "Seedless Green", "price": "₹90 / kg", "trend": "up", "change": "+₹5" },
+        { "name": "Papaya", "variety": "Red Lady", "price": "₹40 / kg", "trend": "down", "change": "-₹5" },
+        { "name": "Watermelon", "variety": "Kiran", "price": "₹25 / kg", "trend": "stable", "change": "0" },
+        { "name": "Pomegranate", "variety": "Bhagwa", "price": "₹150 / kg", "trend": "up", "change": "+₹10" },
+    ] },
     { id: 3, category: "Flowers", items: [
-        {
-                "name": "Rose",
-                "variety": "Red Local",
-                "price": "₹120 / bundle",
-                "trend": "up",
-                "change": "+₹10"
-        },
-        {
-                "name": "Marigold",
-                "variety": "Orange",
-                "price": "₹60 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Jasmine",
-                "variety": "Mogra",
-                "price": "₹300 / kg",
-                "trend": "up",
-                "change": "+₹20"
-        },
-        {
-                "name": "Lotus",
-                "variety": "Pink",
-                "price": "₹15 / pc",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Orchid",
-                "variety": "Purple",
-                "price": "₹400 / bunch",
-                "trend": "down",
-                "change": "-₹20"
-        },
-        {
-                "name": "Tulip",
-                "variety": "Mixed",
-                "price": "₹500 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Lily",
-                "variety": "White Asiatic",
-                "price": "₹250 / bunch",
-                "trend": "up",
-                "change": "+₹15"
-        },
-        {
-                "name": "Sunflower",
-                "variety": "Large",
-                "price": "₹30 / pc",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Daisy",
-                "variety": "White",
-                "price": "₹150 / bunch",
-                "trend": "down",
-                "change": "-₹10"
-        },
-        {
-                "name": "Gerbera",
-                "variety": "Mixed",
-                "price": "₹80 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Chrysanthemum",
-                "variety": "Yellow",
-                "price": "₹140 / kg",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Hibiscus",
-                "variety": "Red",
-                "price": "₹50 / kg",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Carnation",
-                "variety": "Mixed",
-                "price": "₹200 / bunch",
-                "trend": "down",
-                "change": "-₹10"
-        },
-        {
-                "name": "Tuberose",
-                "variety": "Rajnigandha",
-                "price": "₹250 / kg",
-                "trend": "up",
-                "change": "+₹15"
-        },
-        {
-                "name": "Asters",
-                "variety": "Purple",
-                "price": "₹100 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Gladiolus",
-                "variety": "Mixed Spikes",
-                "price": "₹180 / bunch",
-                "trend": "down",
-                "change": "-₹10"
-        },
-        {
-                "name": "Anthurium",
-                "variety": "Red",
-                "price": "₹300 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Bougainvillea",
-                "variety": "Pink",
-                "price": "₹40 / bunch",
-                "trend": "up",
-                "change": "+₹5"
-        },
-        {
-                "name": "Lavender",
-                "variety": "Fresh",
-                "price": "₹350 / bunch",
-                "trend": "stable",
-                "change": "0"
-        },
-        {
-                "name": "Peony",
-                "variety": "Pink",
-                "price": "₹450 / bunch",
-                "trend": "down",
-                "change": "-₹30"
-        }
-] }
+        { "name": "Rose", "variety": "Red Local", "price": "₹120 / bundle", "trend": "up", "change": "+₹10" },
+        { "name": "Marigold", "variety": "Orange", "price": "₹60 / kg", "trend": "stable", "change": "0" },
+        { "name": "Jasmine", "variety": "Mogra", "price": "₹300 / kg", "trend": "up", "change": "+₹20" },
+        { "name": "Lotus", "variety": "Pink", "price": "₹15 / pc", "trend": "stable", "change": "0" },
+        { "name": "Orchid", "variety": "Purple", "price": "₹400 / bunch", "trend": "down", "change": "-₹20" },
+    ] }
 ];
 
 export default function Market() {
@@ -447,12 +53,13 @@ export default function Market() {
     const [searchTerm, setSearchTerm] = useState('');
     const [aiResult, setAiResult] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
+    const [markets, setMarkets] = useState<Market[]>([]);
+    const [loadingMarkets, setLoadingMarkets] = useState(false);
+    const [location, setLocation] = useState<{lat: number; lon: number} | null>(null);
 
     const today = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
     const cleanSearch = searchTerm.trim().toLowerCase();
 
-    // Calculate total matches
     const totalMatches = DAILY_PRICES.reduce((acc, category) => {
         if (!cleanSearch) return acc + category.items.length;
         return acc + category.items.filter(item =>
@@ -461,6 +68,39 @@ export default function Market() {
             category.category.toLowerCase().includes(cleanSearch)
         ).length;
     }, 0);
+
+    useEffect(() => {
+        getUserLocation();
+    }, []);
+
+    const getUserLocation = async () => {
+        try {
+            const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
+            const ipData = await ipRes.json();
+            const userLoc = { lat: ipData.latitude, lon: ipData.longitude };
+            setLocation(userLoc);
+            fetchNearbyMarkets(userLoc.lat, userLoc.lon);
+        } catch (error) {
+            console.error("Failed to get location:", error);
+        }
+    };
+
+    const fetchNearbyMarkets = async (lat: number, lon: number) => {
+        setLoadingMarkets(true);
+        try {
+            const res = await axios.get(`${API_BASE_URL}/places/nearby-markets`, {
+                params: { lat, lon, radius: 10000 },
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
+            if (res.data.markets && res.data.markets.length > 0) {
+                setMarkets(res.data.markets);
+            }
+        } catch (error) {
+            console.error("Failed to fetch markets:", error);
+        } finally {
+            setLoadingMarkets(false);
+        }
+    };
 
     useEffect(() => {
         if (cleanSearch.length > 2 && totalMatches === 0) {
@@ -488,12 +128,10 @@ export default function Market() {
 
     return (
         <div className="flex flex-col h-full bg-[#f0f9ff] text-slate-800 font-sans pb-6">
-            {/* Header Info */}
             <div className="px-6 pt-6 pb-2 bg-white/50 backdrop-blur-md sticky top-0 z-20 border-b border-sky-100 flex flex-col gap-2">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900">Agri Market</h2>
                 <p className="text-xs text-slate-500 font-medium">{today}</p>
 
-                {/* Toggle between Prices and Nearby */}
                 <div className="flex bg-slate-100/80 p-1 rounded-xl mt-2 w-full">
                     <button
                         onClick={() => setActiveTab('prices')}
@@ -514,25 +152,27 @@ export default function Market() {
 
                 {activeTab === 'nearby' && (
                     <div className="space-y-4 animate-fade-in">
-                        {/* Mock Map View Element */}
                         <div className="w-full h-48 bg-sky-100 rounded-2xl border border-sky-200 flex flex-col items-center justify-center relative overflow-hidden shadow-sm">
-                            {/* Placeholder for actual GMaps iframe or map view */}
                             <div className="absolute inset-0 opacity-20 bg-[url('https://maps.wikimedia.org/osm-intl/12/2932/1559.png')] bg-cover bg-center mix-blend-multiply"></div>
                             <div className="relative z-10 w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-200 border-4 border-white mb-2 animate-bounce">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
                                     <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                                 </svg>
                             </div>
-                            <span className="relative z-10 font-bold text-slate-700 bg-white/80 px-4 py-1.5 rounded-full text-sm backdrop-blur-sm shadow-sm border border-white">Finding closest APMC...</span>
+                            <span className="relative z-10 font-bold text-slate-700 bg-white/80 px-4 py-1.5 rounded-full text-sm backdrop-blur-sm shadow-sm border border-white">
+                                {loadingMarkets ? "Finding markets..." : location ? "Real markets near you" : "Location required"}
+                            </span>
                         </div>
 
                         <div className="flex items-center justify-between px-2">
                             <h3 className="font-bold text-slate-800">Markets within 10 km</h3>
-                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">{NEARBY_MARKETS.length} Found</span>
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                                {markets.length > 0 ? markets.length : "Using nearby data"}
+                            </span>
                         </div>
 
                         <div className="space-y-3">
-                            {NEARBY_MARKETS.map(market => (
+                            {markets.length > 0 ? markets.map((market) => (
                                 <div key={market.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <div>
@@ -548,26 +188,29 @@ export default function Market() {
 
                                     <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                         <div className="flex items-center gap-1.5">
-                                            <div className={`w-2 h-2 rounded-full ${market.status === 'Open Now' ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                                            <span className={`text-xs font-bold ${market.status === 'Open Now' ? 'text-emerald-700' : 'text-red-600'}`}>{market.status}</span>
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                            <span className="text-xs font-bold text-emerald-700">Open Now</span>
                                         </div>
-                                        <span className="text-xs font-medium text-slate-500">[{market.closesAt}]</span>
                                         <button
-                                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${market.query}`, '_blank', 'noopener,noreferrer')}
+                                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${market.lat},${market.lon}`, '_blank')}
                                             className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg ml-auto transition-colors"
                                         >
                                             Directions
                                         </button>
                                     </div>
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="text-center py-8 text-slate-500">
+                                    <p>No markets found nearby.</p>
+                                    <p className="text-xs mt-2">Prices shown are from nearby mandis.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'prices' && (
                     <div className="space-y-6 animate-fade-in">
-                        {/* Search / Filter Bar */}
                         <div className="relative">
                             <input
                                 type="text"
@@ -605,8 +248,8 @@ export default function Market() {
                                                 <div className="flex flex-col items-end">
                                                     <span className="font-bold text-slate-900 text-sm">{item.price}</span>
                                                     <div className={`flex items-center gap-1 text-[10px] font-bold ${item.trend === 'up' ? 'text-red-500' : item.trend === 'down' ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                                        {item.trend === 'up' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" className="rotate-180 origin-center" /></svg>}
-                                                        {item.trend === 'down' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clipRule="evenodd" /></svg>}
+                                                        {item.trend === 'up' && <span>↑</span>}
+                                                        {item.trend === 'down' && <span>↓</span>}
                                                         {item.change !== "0" && <span>{item.change}</span>}
                                                         {item.change === "0" && <span>Stable</span>}
                                                     </div>
@@ -618,10 +261,8 @@ export default function Market() {
                             );
                         })}
 
-                        {/* AI Fallback if no matches found */}
                         {searchTerm && totalMatches === 0 && (
                             <div className="mt-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl shadow-sm text-center animate-fade-in relative overflow-hidden">
-                                {/* Decorative blobs */}
                                 <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-indigo-200/40 rounded-full blur-2xl"></div>
                                 <div className="absolute bottom-[-20%] left-[-10%] w-32 h-32 bg-blue-200/30 rounded-full blur-2xl"></div>
 

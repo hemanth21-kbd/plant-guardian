@@ -12,7 +12,7 @@ import hashlib
 import time
 import random
 
-from . import models, schemas, database, gemini_client
+from . import models, schemas, database, gemini_client, places_service
 
 # Create tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -262,6 +262,9 @@ async def upload_image(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     return {"url": f"/uploads/{file.filename}"}
+
+# Places API - Real nearby shops and markets
+app.include_router(places_service.router, prefix="/places", tags=["places"])
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
