@@ -76,11 +76,12 @@ def predict_disease(
         
         # AI DIAGNOSIS using Groq
         print(f"Analyzing plant health with Groq AI (Language: {language})...")
-        gemini_result = groq_client.try_groq_vision(temp_file)
         
-        if not gemini_result:
-             # Fallback to a mock result if Groq fails
-             gemini_result = groq_client.get_mock_result()
+        try:
+            gemini_result = groq_client.analyze_plant_disease(temp_file)
+        except Exception as e:
+            print(f"AI Diagnosis Failed: {e}")
+            raise HTTPException(status_code=503, detail=f"AI service unavailable: {str(e)}")
 
         # Handle potentially stringified 'details' from Gemini
         details_data = gemini_result.get("details", {})

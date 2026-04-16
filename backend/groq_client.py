@@ -23,8 +23,11 @@ def analyze_plant_disease(image_path):
     if result:
         return result
 
-    print("All AI services failed. Returning Static Result.")
-    return get_mock_result()
+    # Return error instead of mock data
+    raise Exception("AI services unavailable. Please check API key configuration.")
+
+def get_mock_result():
+    raise Exception("AI service unavailable. Please configure GROQ_API_KEY in environment variables.")
 
 def try_groq_vision(image_path):
     """Use Groq with vision-enabled model for plant analysis."""
