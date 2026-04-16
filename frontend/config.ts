@@ -1,40 +1,8 @@
-
 // Configuration for the backend API URL
 
-// IMPORTANT: For Android Emulator, change this to 'http://10.0.2.2:8000'
-// IMPORTANT: For a Real Android Device, change this to your PC's IP address (e.g., 'http://192.168.1.5:8000')
-// For local web development, 'http://localhost:8000' works fine.
+// We are hardcoding the API to connect directly to the successfully deployed Cloud Backend on Render.
+// This completely bypasses all local network issues, Windows Firewall blocks, and IP address changes.
+// It ensures that regardless of whether you are on an Android emulator, physical phone, or local computer,
+// it connects smoothly to the live API!
 
-// Production Backend
-// IMPORTANT: Once you deploy to Render, paste your Render URL here:
-// Example: export const API_BASE_URL = 'https://plant-guardian-backend-xxx.onrender.com';
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    
-    // Determine if we are running inside Android Capacitor (usually localhost or similar)
-    const isCapacitor = window.hasOwnProperty('Capacitor') || protocol === 'capacitor:';
-
-    // If we're on a tunnel (like serveo), use the same host for the backend
-    if (hostname.includes('serveo.net') || hostname.includes('localtunnel.me') || hostname.includes('pinggy')) {
-        return `${protocol}//${window.location.host}`;
-    }
-    
-    // If we are on Android/Capacitor, localhost refers to the phone itself. 
-    // We MUST use the PC's actual LAN IP to reach the backend.
-    if (isCapacitor || hostname === 'localhost') {
-        // Use the actual LAN IP of the computer running the server
-        return `http://10.44.99.244:8000`;
-    }
-
-    // Default LAN IP fallback
-    return `http://${hostname}:8000`;
-  }
-  // Default server-side
-  return 'http://10.44.99.244:8000';
-};
-
-export const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://plant-guardian-backend.onrender.com'
-  : getApiBaseUrl();
+export const API_BASE_URL = 'https://plant-guardian-backend.onrender.com';
