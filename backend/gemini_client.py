@@ -3,89 +3,87 @@ import requests
 import json
 import base64
 import mimetypes
-import time
 from dotenv import load_dotenv
 
 load_dotenv()
 
-
-# Please configure GOOGLE_API_KEY in your .env file or Render Environment Variables!
-# Do NOT hardcode the key here, it will be automatically revoked by GitHub!
-API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
-HF_API_KEY = os.getenv("HF_API_KEY") # Optional: Add if you have one
+API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+HF_API_KEY = os.getenv("HF_API_KEY")
 
 def analyze_plant_disease(image_path):
-    """
-    Main Analysis Function.
-    Strategy:
-    1. Try Google Gemini (Best Accuracy).
-    2. Fallback to Hugging Face (Good for Description).
-    3. Return Safe Default (Never Crash).
-    """
+    """Main Analysis Function using Groq."""
     print(f"Starting Analysis for {image_path}...")
     
-    # 1. Try Google Gemini
-    result = try_google_gemini(image_path)
+    result = try_groq_vision(image_path)
     if result:
         return result
 
-    print("Google Gemini failed/blocked. Switching to Backup AI (Hugging Face)...")
-
-    # 2. Try Hugging Face (Backup)
+    print("Groq failed. Trying Hugging Face...")
     result = try_hugging_face(image_path)
     if result:
         return result
 
-    # 3. Final Fallback
     print("All AI services failed. Returning Static Result.")
     return get_mock_result()
 
-import google.generativeai as genai
-
-# Configure Gemini
-if API_KEY:
-    genai.configure(api_key=API_KEY)
-
-def try_google_gemini(image_path):
-    if not API_KEY: return None
-    
-    print(f"Using Google Gemini (Model: gemini-flash-latest) for {image_path}...")
+def try_groq_vision(image_path):
+    """Use Groq with vision-enabled model for plant analysis."""
+    if not API_KEY:
+        print("No API key configured")
+        return None
     
     try:
-        # Prepare the model
-        model = genai.GenerativeModel('gemini-flash-latest')
+        from groq import Groq
         
-        # Load image
+        client = Groq(api_key=API_KEY)
+        
+        # Read and encode image
         with open(image_path, "rb") as f:
-            data = f.read()
-
-        # The SDK can accept bytes directly using a dictionary format or slightly inconsistent ways depending on version
-        # Safest is PIL or the dictionary format: {'mime_type': 'image/jpeg', 'data': bytes}
+            image_data = base64.b64encode(f.read()).decode('utf-8')
+        
         mime_type, _ = mimetypes.guess_type(image_path)
-        if not mime_type: mime_type = "image/jpeg"
+        if not mime_type:
+            mime_type = "image/jpeg"
         
-        image_part = {"mime_type": mime_type, "data": data}
-        
-        prompt = "Analyze this plant image. Return JSON with keys: plant_name, disease_name, confidence, details (description, prevention, treatment)."
-        
-        # execution
-        response = model.generate_content(
-            [prompt, image_part],
-            generation_config={"response_mime_type": "application/json"}
+        prompt = """Analyze this plant image and return JSON with these exact keys:
+- plant_name: name of the plant
+- disease_name: name of disease or "Healthy" 
+- confidence: confidence score (0-1)
+- details: object with description, prevention, treatment
+
+Return ONLY valid JSON, no extra text."""
+
+        response = client.chat.completions.create(
+            model="llama-3.2-11b-vision-preview",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{mime_type};base64,{image_data}"}
+                        }
+                    ]
+                }
+            ],
+            temperature=0.3,
+            max_tokens=1024,
+            response_format={"type": "json_object"}
         )
         
-        text = response.text
-        # Cleanup potential markdown wrappers just in case
-        text = text.replace("```json", "").replace("```", "").strip()
-        return json.loads(text)
-            
+        result = response.choices[0].message.content
+        print(f"Groq Vision Result: {result[:200]}...")
+        return json.loads(result)
+        
+    except ImportError:
+        print("Groq not installed. Installing...")
+        return None
     except Exception as e:
-        print(f"Gemini Exception: {e}")
-    
-    return None
+        print(f"Groq Exception: {e}")
+        return None
 
 def try_hugging_face(image_path):
-    # Uses Salesforce BLIP for Image Captioning (Free/Public Model)
     API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
     
     headers = {}
@@ -99,24 +97,19 @@ def try_hugging_face(image_path):
         response = requests.post(API_URL, headers=headers, data=data, timeout=20)
         
         if response.status_code == 200:
-            # Result is like: [{"generated_text": "a close up of a tomato plant with yellow leaves"}]
             description = response.json()[0].get("generated_text", "Plant detected")
-            
             print(f"HuggingFace Success: {description}")
             
-            # Map description to our JSON format
             return {
                 "plant_name": "Plant Detected (Backup AI)",
                 "disease_name": "Visual Analysis Complete",
                 "confidence": 0.85,
                 "details": {
-                    "description": f"AI Analysis: {description}. (Using Backup Model due to Google connection limits).",
+                    "description": f"AI Analysis: {description}",
                     "prevention": "Ensure proper watering and sunlight.",
-                    "treatment": "Consult a local agriculturist for specific chemical treatments."
+                    "treatment": "Consult a local agriculturist."
                 }
             }
-        else:
-            print(f"HuggingFace Error: {response.status_code}")
     except Exception as e:
         print(f"HuggingFace Exception: {e}")
 
@@ -128,80 +121,108 @@ def get_mock_result():
         "disease_name": "Check Connection",
         "confidence": 0.0,
         "details": {
-            "description": "We could not connect to any AI service at this moment. Please check server logs.",
+            "description": "We could not connect to any AI service.",
             "prevention": "Try again later.",
             "treatment": "Restart App."
         }
     }
 
-def ask_gemini(query):
-    # Simple chat fallback
-    if not API_KEY: return "AI Service Unavailable (Key Missing)"
+def ask_groq(query):
+    """Chat using Groq LLM."""
+    if not API_KEY:
+        return "AI Service Unavailable (No API Key)"
     
     try:
-        # Use gemini-flash-latest (supported by the local older SDK)
-        model = genai.GenerativeModel('gemini-flash-latest')
-        # Instructing the AI to be extremely concise immediately speeds up text generation
-        fast_prompt = f"You are Plant Guardian, a helpful assistant. Keep your answer EXTREMELY concise, fast, and short. Focus on plant care. Here is the user's message: {query}"
+        from groq import Groq
+        client = Groq(api_key=API_KEY)
         
-        # Max output tokens limit cuts off rambling, returning the response instantly
-        response = model.generate_content(
-            fast_prompt, 
-            generation_config={"max_output_tokens": 150}
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are Plant Guardian, a helpful plant care assistant. Keep answers short and helpful."},
+                {"role": "user", "content": query}
+            ],
+            max_tokens=150,
+            temperature=0.5
         )
-        return response.text
+        return response.choices[0].message.content
     except Exception as e:
-        print(f"Chat Error: {e}")
-        pass
-    return "I am unable to connect to the brain right now. Please try again."
+        print(f"Groq Chat Error: {e}")
+        return "I am unable to connect to the AI right now."
 
-def stream_gemini(query):
-    """Generates a streaming response for real-time interaction."""
+def stream_groq(query):
+    """Streaming chat using Groq."""
     if not API_KEY:
-        yield "AI Service Unavailable (Key Missing)"
+        yield "AI Service Unavailable (No API Key)"
         return
-
+    
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        fast_prompt = f"You are Plant Guardian, a highly knowledgeable and responsive AI assistant. Your goal is to provide immediate, actionable advice on plant care, disease diagnosis, and cultivation. Keep your answers clear, professional, and helpful. User message: {query}"
+        from groq import Groq
+        client = Groq(api_key=API_KEY)
         
-        response = model.generate_content(
-            fast_prompt,
-            generation_config={"max_output_tokens": 1000},
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "You are Plant Guardian, a helpful plant care assistant. Keep answers short and helpful."},
+                {"role": "user", "content": query}
+            ],
+            max_tokens=500,
+            temperature=0.5,
             stream=True
         )
         
         for chunk in response:
-            if chunk.text:
-                yield chunk.text
+            if chunk.choices[0].delta.content:
+                yield chunk.choices[0].delta.content
     except Exception as e:
-        print(f"Streaming Error: {e}")
-        if "429" in str(e) or "quota" in str(e).lower():
-            yield "I'm currently receiving too many requests. Please wait a few seconds and try again. (Quota Exceeded)"
-        else:
-            yield "I am having trouble processing that right now. Please try again."
+        print(f"Groq Streaming Error: {e}")
+        yield "I'm having trouble processing that right now."
 
 def translate_text(text, target_language):
-    if not API_KEY: return text
+    if not API_KEY:
+        return text
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        prompt = f"Translate the following JSON content to {target_language}. Return ONLY the JSON with translated values, keeping keys and structure exactly the same: {text}"
+        from groq import Groq
+        client = Groq(api_key=API_KEY)
         
-        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-        return response.text.replace("```json", "").replace("```", "").strip()
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": f"Translate the following JSON to {target_language}. Return ONLY the translated JSON with same keys."},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=1024,
+            response_format={"type": "json_object"}
+        )
+        return response.choices[0].message.content
     except Exception as e:
         print(f"Translation Error: {e}")
         return text
+
 def get_disease_info(plant_name, disease_name):
-    if not API_KEY: return None
+    if not API_KEY:
+        return None
     
     try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        prompt = f"Provide detailed information about {disease_name} in {plant_name}. Return JSON with keys: description, prevention, treatment."
+        from groq import Groq
+        client = Groq(api_key=API_KEY)
         
-        response = model.generate_content(prompt, generation_config={"response_mime_type": "application/json"})
-        return json.loads(response.text.replace("```json", "").replace("```", "").strip())
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": "Return JSON with keys: description, prevention, treatment"},
+                {"role": "user", "content": f"Tell me about {disease_name} in {plant_name}"}
+            ],
+            max_tokens=300,
+            response_format={"type": "json_object"}
+        )
+        return json.loads(response.choices[0].message.content)
     except Exception as e:
         print(f"Get Disease Info Error: {e}")
         return None
+
+# Legacy function names for backward compatibility
+try_google_gemini = try_groq_vision
+ask_gemini = ask_groq
+stream_gemini = stream_groq
