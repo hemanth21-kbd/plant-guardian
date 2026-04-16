@@ -14,13 +14,12 @@ import random
 
 from . import models, schemas, database, gemini_client, places_service
 
-# Try to create tables, but don't fail if database isn't available
 try:
     models.Base.metadata.create_all(bind=database.engine)
-    print("✅ Database tables created/verified")
+    print("✅ Database initialized")
 except Exception as e:
-    print(f"⚠️ Database connection issue: {e}")
-    print("App will try to connect when needed...")
+    print(f"⚠️ Database not available: {e}")
+    print("Using fallback mode...")
 
 app = FastAPI(title="Plant Disease Detection API")
 
