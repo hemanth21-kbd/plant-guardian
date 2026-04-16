@@ -5,10 +5,16 @@ from sqlalchemy.orm import sessionmaker
 import os
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./plants.db")
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+else:
+    connect_args = {}
 
 engine = create_engine(
-    DATABASE_URL, connect_args=connect_args
+    DATABASE_URL, connect_args=connect_args,
+    pool_pre_ping=True,
+    pool_size=10,
+    max_overflow=20
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
