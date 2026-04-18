@@ -36,8 +36,56 @@ def query_overpass(query: str, timeout: int = 30) -> Optional[dict]:
                 return response.json()
         except Exception as e:
             print(f"Overpass error on {endpoint}: {e}")
-            time.sleep(1)  # Brief delay before next endpoint
+            time.sleep(1)
     return None
+
+def is_agricultural_shop(tags: dict, name: str) -> bool:
+    """
+    Strict filter for genuine agricultural input shops.
+    Only includes shops that are explicitly tagged as agricultural
+    or have clear agricultural keywords in their name.
+    """
+    shop_type = tags.get("shop", "").lower()
+    name_lower = name.lower()
+    
+    # Primary agricultural shop types (OSM official tags)
+    primary_agri_tags = {
+        'agrarian', 'agro', 'farm_supply', 'garden_centre', 'farm',
+        'agricultural', 'horticulture', 'nursery'
+    }
+    
+    if shop_type in primary_agri_tags:
+        return True
+    
+    # Secondary: hardware shops that explicitly mention agriculture
+    if shop_type == 'hardware':
+        agri_hardware_keywords = [
+            'agri', 'farm', 'agriculture', 'kisan', 'krishi',
+            'fertilizer', 'pesticide', 'seed', 'irrigation',
+            'tractor', 'farm equipment', 'agricultural implements'
+        ]
+        return any(kw in name_lower for kw in agri_hardware_keywords)
+    
+    # Shop type is not agricultural at all - reject
+    non_agri_tags = {
+        'convenience', 'supermarket', 'mall', 'department_store',
+        'general', 'retail', 'commercial', 'trading', 'wholesale',
+        'clothes', 'electronics', 'furniture', 'car', 'repair',
+        'bakery', 'butcher', 'chemist', 'pharmacy', 'restaurant',
+        'cafe', 'bar', 'bank', 'atm', 'fuel', 'car_repair'
+    }
+    
+    if shop_type in non_agri_tags:
+        return False
+    
+    # For any other shop type, require very strong agri indication in name
+    strong_agri_keywords = [
+        'agri', 'farm', 'agriculture', 'kisan', 'krishi',
+        'fertilizer', 'pesticide', 'seed', 'irrigation', 'agrochemical',
+        'farm inputs', 'agri inputs', 'horticulture', 'nursery'
+    ]
+    
+    return any(kw in name_lower for kw in strong_agri_keywords)
 
 @router.get("/nearby-shops")
 def get_nearby_shops(
@@ -47,14 +95,15 @@ def get_nearby_shops(
 ):
     """
     Find nearby fertilizer/agriculture shops using OpenStreetMap.
-    Uses broad Indian-relevant tags: hardware, convenience, general stores + agricultural keywords.
+    Only returns genuine agricultural input suppliers.
     """
-    # Broader query: hardware + convenience + general + supermarket with name filtering
     overpass_query = f"""
     [out:json][timeout:30];
     (
-      node["shop"~"hardware|convenience|general|supermarket|agro|agricultural|farm|garden"](around:{radius},{lat},{lon});
-      way["shop"~"hardware|convenience|general|supermarket|agro|agricultural|farm|garden"](around:{radius},{lat},{lon});
+      node["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
+      way["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
+      node["shop"="hardware"](around:{radius},{lat},{lon});
+      way["shop"="hardware"](around:{radius},{lat},{lon});
     );
     out center;
     """
@@ -65,23 +114,30 @@ def get_nearby_shops(
             return {"error": "Overpass API unavailable", "shops": [], "count": 0}
         
         shops = []
+        seen_coords = set()  # Deduplicate by approximate location
+        
         for element in data.get("elements", []):
             tags = element.get("tags", {})
-            name = tags.get("name", "Local Shop")
+            name = tags.get("name", "Local Agri Shop")
             
-            # Filter: keep shops with agriculture-related keywords in name
-            name_lower = name.lower()
-            agri_keywords = ['agri', 'farm', 'fertilizer', 'pesticide', 'seed', 'kisan', 'krishi', 
-                           'hardware', 'tool', 'equipment', 'horticulture', 'garden', 'nursery']
+            # Skip if no proper name
+            if len(name.strip()) < 2 or name.lower() in ['shop', 'store', 'business']:
+                continue
             
-            # Also keep if shop type explicitly agricultural
-            shop_type = tags.get("shop", "")
-            is_agri_shop = any(kw in name_lower for kw in agri_keywords) or shop_type in ['agrarian', 'agro', 'farm_supply', 'garden_centre']
+            # Strict agricultural filter
+            if not is_agricultural_shop(tags, name):
+                continue
             
             lat_val = element.get("lat") or element.get("center", {}).get("lat")
             lon_val = element.get("lon") or element.get("center", {}).get("lon")
             
-            if lat_val and lon_val and is_agri_shop:
+            if lat_val and lon_val:
+                # Round coordinates to avoid near-duplicate entries
+                coord_key = (round(lat_val, 5), round(lon_val, 5))
+                if coord_key in seen_coords:
+                    continue
+                seen_coords.add(coord_key)
+                
                 import math
                 R = 6371
                 dlat = math.radians(lat_val - lat)
@@ -96,10 +152,15 @@ def get_nearby_shops(
                     "lat": lat_val,
                     "lon": lon_val,
                     "address": tags.get("addr:street", tags.get("addr:full", "Nearby")),
-                    "type": shop_type,
+                    "type": tags.get("shop", "").replace("_", " ").title(),
                 })
         
+        # Sort by distance and limit to 15
         shops = sorted(shops, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
+        
+        print(f"Found {len(shops)} agricultural shops after filtering")
+        for shop in shops[:5]:
+            print(f"  - {shop['name']} ({shop['type']}) - {shop['distance']}km")
         
         return {"shops": shops, "count": len(shops)}
         
@@ -115,18 +176,15 @@ def get_nearby_markets(
 ):
     """
     Find nearby markets using OpenStreetMap.
-    Searches for marketplaces, retail areas, supermarkets, and commercial zones.
+    Returns actual marketplaces and trading areas.
     """
-    # Broader query: marketplace + retail + supermarket + commercial + shopping centers
     overpass_query = f"""
     [out:json][timeout:30];
     (
-      node["amenity"~"marketplace|trading|fair"](around:{radius},{lat},{lon});
-      way["amenity"~"marketplace|trading|fair"](around:{radius},{lat},{lon});
-      node["landuse"~"retail|commercial"](around:{radius},{lat},{lon});
-      way["landuse"~"retail|commercial"](around:{radius},{lat},{lon});
-      node["shop"~"supermarket|mall|department_store"](around:{radius},{lat},{lon});
-      way["shop"~"supermarket|mall|department_store"](around:{radius},{lat},{lon});
+      node["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
+      way["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
+      node["landuse"="retail"](around:{radius},{lat},{lon});
+      way["landuse"="retail"](around:{radius},{lat},{lon});
     );
     out center;
     """
@@ -137,14 +195,25 @@ def get_nearby_markets(
             return {"error": "Overpass API unavailable", "markets": [], "count": 0}
         
         markets = []
+        seen_coords = set()
+        
         for element in data.get("elements", []):
             tags = element.get("tags", {})
             name = tags.get("name", "Local Market")
+            
+            # Skip unnamed or generic entries
+            if len(name.strip()) < 2:
+                continue
             
             lat_val = element.get("lat") or element.get("center", {}).get("lat")
             lon_val = element.get("lon") or element.get("center", {}).get("lon")
             
             if lat_val and lon_val:
+                coord_key = (round(lat_val, 5), round(lon_val, 5))
+                if coord_key in seen_coords:
+                    continue
+                seen_coords.add(coord_key)
+                
                 import math
                 R = 6371
                 dlat = math.radians(lat_val - lat)
@@ -153,7 +222,12 @@ def get_nearby_markets(
                 distance = round(R * 2 * math.asin(math.sqrt(a)), 1)
                 
                 # Determine market type
-                market_type = tags.get("amenity", tags.get("landuse", tags.get("shop", "Market")))
+                market_type = (
+                    tags.get("amenity", "") or 
+                    tags.get("landuse", "") or 
+                    tags.get("shop", "") or 
+                    "Market"
+                )
                 
                 markets.append({
                     "id": element.get("id"),
@@ -165,6 +239,10 @@ def get_nearby_markets(
                 })
         
         markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
+        
+        print(f"Found {len(markets)} markets")
+        for market in markets[:3]:
+            print(f"  - {market['name']} ({market['type']}) - {market['distance']}km")
         
         return {"markets": markets, "count": len(markets)}
         
