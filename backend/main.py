@@ -271,6 +271,22 @@ async def upload_image(file: UploadFile = File(...)):
 # Places API - Real nearby shops and markets
 app.include_router(places_service.router, prefix="/places", tags=["places"])
 
+# Test endpoint for OSM
+@app.get("/test-osm")
+def test_osm(lat: float = 13.0827, lon: float = 80.2707):
+    import requests
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    query = f"""
+    [out:json][timeout:25];
+    node["shop"="agrarian"](around:5000,{lat},{lon});
+    out count;
+    """
+    try:
+        resp = requests.post(overpass_url, data=query, headers={"Content-Type": "text/plain"}, timeout=30)
+        return {"status": resp.status_code, "response": resp.text[:500]}
+    except Exception as e:
+        return {"error": str(e)}
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=True)

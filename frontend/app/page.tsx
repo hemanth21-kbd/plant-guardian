@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import CameraFeed from "@/components/CameraFeed";
 import ImageUpload from "@/components/ImageUpload";
 import DiseaseInfo from "@/components/DiseaseInfo";
@@ -13,11 +13,14 @@ import { API_BASE_URL } from "@/config";
 import Garden from "@/components/Garden";
 import Community from "@/components/Community";
 import Market from "@/components/Market";
-import Shops from "@/components/Shops";
 import Profile from "@/components/Profile";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { languageOptions } from "@/utils/translations";
 import { Toaster, toast } from "react-hot-toast";
+
+// Dynamically import ShopMap to avoid SSR issues with Leaflet
+import dynamic from 'next/dynamic';
+const Shops = dynamic(() => import('@/components/Shops'), { ssr: false });
 
 // Global axios interceptor for tunnel bypass
 axios.interceptors.request.use(config => {

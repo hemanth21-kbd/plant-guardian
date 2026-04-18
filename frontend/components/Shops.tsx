@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import ShopMap from './ShopMap';
 
 interface Shop {
     id: number;
@@ -20,7 +21,7 @@ const MOCK_FERTILIZERS = [
 ];
 
 export default function Shops() {
-    const [activeTab, setActiveTab] = useState<'prices' | 'nearby'>('prices');
+    const [activeTab, setActiveTab] = useState<'prices' | 'nearby' | 'map'>('prices');
     const [shops, setShops] = useState<Shop[]>([]);
     const [loadingShops, setLoadingShops] = useState(false);
     const [location, setLocation] = useState<{lat: number; lon: number} | null>(null);
@@ -95,6 +96,12 @@ export default function Shops() {
                         className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'nearby' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Nearby Shops
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('map')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'map' ? 'bg-white shadow-sm text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Map View
                     </button>
                 </div>
             </div>
@@ -175,6 +182,59 @@ export default function Shops() {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'map' && (
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="w-full h-[300px] sm:h-[350px] rounded-2xl border border-sky-200 shadow-sm overflow-hidden">
+                            {location && shops.length > 0 ? (
+                                <ShopMap shops={shops} userLocation={location} />
+                            ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-sky-50 text-slate-500">
+                                    <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-sm font-medium">
+                                        {loadingShops ? "Locating shops for map..." : "No shops available for map view"}
+                                    </p>
+                                    <p className="text-xs mt-1">
+                                        {!location ? "Enable location to see map" : "Try searching in Nearby tab first"}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl">
+                            <p className="text-sm text-blue-800 font-medium">
+                                📍 Interactive map shows nearby agriculture shops. Tap markers for details.
+                            </p>
+                        </div>
+
+                        {shops.length > 0 && (
+                            <div className="space-y-2">
+                                <h3 className="font-bold text-slate-800 px-1">Shop Locations</h3>
+                                {shops.slice(0, 5).map((shop) => (
+                                    <div key={shop.id} className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <h4 className="font-bold text-slate-800 text-sm">{shop.name}</h4>
+                                                <p className="text-xs text-slate-500">{shop.distance} • {shop.address}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lon}`, '_blank')}
+                                                className="text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded-lg transition-colors"
+                                            >
+                                                Navigate
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 

@@ -38,7 +38,9 @@ def get_nearby_shops(
     """
     
     try:
-        response = requests.post(overpass_url, data=overpass_query, timeout=30)
+        headers = {"Content-Type": "text/plain"}
+        response = requests.post(overpass_url, data=overpass_query, headers=headers, timeout=30)
+        print(f"OSM Shops Response: {response.status_code}")
         data = response.json()
         
         shops = []
@@ -85,6 +87,7 @@ def get_nearby_shops(
         return {"shops": shops, "count": len(shops)}
         
     except Exception as e:
+        print(f"OSM Error: {e}")
         return {"error": str(e), "shops": [], "count": 0}
 
 @router.get("/nearby-markets")
@@ -111,7 +114,9 @@ def get_nearby_markets(
     """
     
     try:
-        response = requests.post(overpass_url, data=overpass_query, timeout=30)
+        headers = {"Content-Type": "text/plain"}
+        response = requests.post(overpass_url, data=overpass_query, headers=headers, timeout=30)
+        print(f"OSM Markets Response: {response.status_code}")
         data = response.json()
         
         markets = []
@@ -138,9 +143,11 @@ def get_nearby_markets(
                 })
         
         markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:10]
+        
         return {"markets": markets, "count": len(markets)}
         
     except Exception as e:
+        print(f"OSM Markets Error: {e}")
         return {"error": str(e), "markets": [], "count": 0}
 
 @router.get("/live-price")
