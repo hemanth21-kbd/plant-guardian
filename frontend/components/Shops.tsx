@@ -49,7 +49,7 @@ export default function Shops() {
         setLoadingShops(true);
         try {
             const res = await axios.get(`${API_BASE_URL}/places/nearby-shops`, {
-                params: { lat, lon, radius: 5000 },
+                params: { lat, lon, radius: 30000 },
                 headers: { "Bypass-Tunnel-Reminder": "true" }
             });
             if (res.data.shops && res.data.shops.length > 0) {
@@ -123,7 +123,7 @@ export default function Shops() {
                         </div>
 
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="font-bold text-slate-800">Shops within 5 km</h3>
+                            <h3 className="font-bold text-slate-800">Shops within 30 km</h3>
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                                 {shops.length} Found
                             </span>

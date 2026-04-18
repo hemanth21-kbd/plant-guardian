@@ -18,7 +18,7 @@ except:
 def get_nearby_shops(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
-    radius: int = Query(5000, description="Search radius in meters")
+    radius: int = Query(30000, description="Search radius in meters")
 ):
     """
     Find nearby fertilizer/agriculture shops using OpenStreetMap.
