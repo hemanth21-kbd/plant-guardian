@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { API_BASE_URL, MAPBOX_TOKEN } from '../config';
+import { API_BASE_URL } from '../config';
 import ShopMap from './ShopMap';
 
 interface Shop {
@@ -197,7 +197,7 @@ export default function Shops() {
                     <div className="space-y-4 animate-fade-in">
                         <div className="w-full h-[300px] sm:h-[350px] rounded-2xl border border-sky-200 shadow-sm overflow-hidden">
                             {location && shops.length > 0 ? (
-                                <ShopMap shops={shops} userLocation={location} mapboxToken={MAPBOX_TOKEN} />
+                                <ShopMap shops={shops} userLocation={location} />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-sky-50 text-slate-500">
                                     <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center mb-2">
