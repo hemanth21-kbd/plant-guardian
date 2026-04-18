@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { THUNDERFOREST_API_KEY, MAP_PROVIDER } from '../config';
 
 interface Shop {
   id: number;
@@ -52,6 +53,31 @@ function MapController({ center, zoom }: { center: L.LatLngExpression; zoom: num
   return null;
 }
 
+// Get tile URL based on provider
+function getTileUrl(): string {
+  const provider = MAP_PROVIDER || 'osm';
+  
+  if (provider === 'thunderforest' && THUNDERFOREST_API_KEY) {
+    // Thunderforest API key format: {apikey}/{style}/{z}/{x}/{y}.png
+    // Style options: cycle, transport, transport-dark, landscape, outdoors, etc.
+    // Using 'cycle' style (most neutral)
+    return `https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=${THUNDERFOREST_API_KEY}`;
+  }
+  
+  // Default: OpenStreetMap (no key required)
+  return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+}
+
+function getTileAttribution(): string {
+  const provider = MAP_PROVIDER || 'osm';
+  
+  if (provider === 'thunderforest' && THUNDERFOREST_API_KEY) {
+    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://www.thunderforest.com/">Thunderforest</a>';
+  }
+  
+  return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+}
+
 export default function ShopMap({ shops, userLocation }: ShopMapProps) {
   const [isClient, setIsClient] = useState(false);
 
@@ -76,6 +102,10 @@ export default function ShopMap({ shops, userLocation }: ShopMapProps) {
     );
   }
 
+  const tileUrl = getTileUrl();
+  const attribution = getTileAttribution();
+  const isThunderforest = MAP_PROVIDER === 'thunderforest' && THUNDERFOREST_API_KEY;
+
   return (
     <div className="w-full h-[300px] sm:h-[350px] rounded-2xl overflow-hidden border border-sky-200 shadow-sm z-0">
       <MapContainer
@@ -85,10 +115,9 @@ export default function ShopMap({ shops, userLocation }: ShopMapProps) {
         zoomControl={true}
         attributionControl={true}
       >
-        {/* Free OpenStreetMap tiles - no API key required */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution={attribution}
+          url={tileUrl}
         />
         
         <MapController center={mapCenter} zoom={mapZoom} />
