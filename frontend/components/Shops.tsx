@@ -176,9 +176,16 @@ export default function Shops() {
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-center py-8 text-slate-500">
-                                    <p>No shops found in this area.</p>
-                                    <p className="text-xs mt-2">Try expanding your search.</p>
+                                <div className="text-center py-12 bg-sky-50 rounded-2xl border border-sky-100">
+                                    <div className="w-16 h-16 bg-sky-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-sky-600">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.243ZM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-slate-700 font-bold mb-1">No shops found within 30 km</p>
+                                    <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                                        Try a different location or check the Map View for nearby options.
+                                    </p>
                                 </div>
                             )}
                         </div>

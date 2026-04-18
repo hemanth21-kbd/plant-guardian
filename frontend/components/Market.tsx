@@ -45,7 +45,7 @@ export default function Market() {
         setLoadingMarkets(true);
         try {
             const res = await axios.get(`${API_BASE_URL}/places/nearby-markets`, {
-                params: { lat, lon, radius: 10000 },
+                params: { lat, lon, radius: 30000 },
                 headers: { "Bypass-Tunnel-Reminder": "true" }
             });
             if (res.data.markets && res.data.markets.length > 0) {
@@ -121,7 +121,7 @@ export default function Market() {
                         </div>
 
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="font-bold text-slate-800">Markets within 10 km</h3>
+                            <h3 className="font-bold text-slate-800">Markets within 30 km</h3>
                             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
                                 {markets.length} Found
                             </span>
@@ -156,9 +156,16 @@ export default function Market() {
                                     </div>
                                 </div>
                             )) : (
-                                <div className="text-center py-8 text-slate-500">
-                                    <p>No markets found nearby.</p>
-                                    <p className="text-xs mt-2">Search for prices instead.</p>
+                                <div className="text-center py-12 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                    <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-emerald-600">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.243ZM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-slate-700 font-bold mb-1">No markets found within 30 km</p>
+                                    <p className="text-xs text-slate-500 max-w-xs mx-auto">
+                                        Try searching for crop prices using the Live Prices tab instead.
+                                    </p>
                                 </div>
                             )}
                         </div>

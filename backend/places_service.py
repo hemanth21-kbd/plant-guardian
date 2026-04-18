@@ -1,8 +1,9 @@
 import os
 import requests
 import json
+import time
 from fastapi import APIRouter, Query
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 router = APIRouter()
 
@@ -14,6 +15,30 @@ try:
 except:
     groq_client = None
 
+# Multiple Overpass API endpoints for redundancy
+OVERPASS_ENDPOINTS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://maps.firefox.otange.link/api/interpreter",
+]
+
+def query_overpass(query: str, timeout: int = 30) -> Optional[dict]:
+    """Try multiple Overpass API endpoints with retries."""
+    for endpoint in OVERPASS_ENDPOINTS:
+        try:
+            response = requests.post(
+                endpoint,
+                data=query,
+                headers={"Content-Type": "text/plain"},
+                timeout=timeout
+            )
+            if response.status_code == 200:
+                return response.json()
+        except Exception as e:
+            print(f"Overpass error on {endpoint}: {e}")
+            time.sleep(1)  # Brief delay before next endpoint
+    return None
+
 @router.get("/nearby-shops")
 def get_nearby_shops(
     lat: float = Query(..., description="Latitude"),
@@ -22,34 +47,41 @@ def get_nearby_shops(
 ):
     """
     Find nearby fertilizer/agriculture shops using OpenStreetMap.
+    Uses broad Indian-relevant tags: hardware, convenience, general stores + agricultural keywords.
     """
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    
+    # Broader query: hardware + convenience + general + supermarket with name filtering
     overpass_query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:30];
     (
-      node["shop"="agrarian"](around:{radius},{lat},{lon});
-      node["shop"="farm_supply"](around:{radius},{lat},{lon});
-      node["shop"="agro"](around:{radius},{lat},{lon});
-      node["shop"="garden_centre"](around:{radius},{lat},{lon});
-      way["shop"="farm_supply"](around:{radius},{lat},{lon});
+      node["shop"~"hardware|convenience|general|supermarket|agro|agricultural|farm|garden"](around:{radius},{lat},{lon});
+      way["shop"~"hardware|convenience|general|supermarket|agro|agricultural|farm|garden"](around:{radius},{lat},{lon});
     );
     out center;
     """
     
     try:
-        headers = {"Content-Type": "text/plain"}
-        response = requests.post(overpass_url, data=overpass_query, headers=headers, timeout=30)
-        print(f"OSM Shops Response: {response.status_code}")
-        data = response.json()
+        data = query_overpass(overpass_query, timeout=30)
+        if not data:
+            return {"error": "Overpass API unavailable", "shops": [], "count": 0}
         
         shops = []
         for element in data.get("elements", []):
-            name = element.get("tags", {}).get("name", "Local Agri Shop")
+            tags = element.get("tags", {})
+            name = tags.get("name", "Local Shop")
+            
+            # Filter: keep shops with agriculture-related keywords in name
+            name_lower = name.lower()
+            agri_keywords = ['agri', 'farm', 'fertilizer', 'pesticide', 'seed', 'kisan', 'krishi', 
+                           'hardware', 'tool', 'equipment', 'horticulture', 'garden', 'nursery']
+            
+            # Also keep if shop type explicitly agricultural
+            shop_type = tags.get("shop", "")
+            is_agri_shop = any(kw in name_lower for kw in agri_keywords) or shop_type in ['agrarian', 'agro', 'farm_supply', 'garden_centre']
+            
             lat_val = element.get("lat") or element.get("center", {}).get("lat")
             lon_val = element.get("lon") or element.get("center", {}).get("lon")
             
-            if lat_val and lon_val:
+            if lat_val and lon_val and is_agri_shop:
                 import math
                 R = 6371
                 dlat = math.radians(lat_val - lat)
@@ -63,65 +95,52 @@ def get_nearby_shops(
                     "distance": f"{distance} km",
                     "lat": lat_val,
                     "lon": lon_val,
-                    "address": element.get("tags", {}).get("addr:street", "Nearby"),
+                    "address": tags.get("addr:street", tags.get("addr:full", "Nearby")),
+                    "type": shop_type,
                 })
         
-        shops = sorted(shops, key=lambda x: float(x["distance"].replace(" km", "")))[:10]
+        shops = sorted(shops, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
         
-        # Use Groq to enhance shop data with descriptions
-        if groq_client and shops:
-            try:
-                shop_names = ", ".join([s["name"] for s in shops[:5]])
-                response = groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[
-                        {"role": "system", "content": "You are a local guide. Provide brief descriptions (max 5 words each) for these shops if they sell agricultural products. Return JSON array of descriptions."},
-                        {"role": "user", "content": f"Shops: {shop_names}"}
-                    ],
-                    max_tokens=100
-                )
-                # Parse and add descriptions if available
-            except:
-                pass
-                
         return {"shops": shops, "count": len(shops)}
         
     except Exception as e:
-        print(f"OSM Error: {e}")
+        print(f"OSM Shops Error: {e}")
         return {"error": str(e), "shops": [], "count": 0}
 
 @router.get("/nearby-markets")
 def get_nearby_markets(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
-    radius: int = Query(10000, description="Search radius in meters")
+    radius: int = Query(30000, description="Search radius in meters")
 ):
     """
     Find nearby markets using OpenStreetMap.
+    Searches for marketplaces, retail areas, supermarkets, and commercial zones.
     """
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    
+    # Broader query: marketplace + retail + supermarket + commercial + shopping centers
     overpass_query = f"""
-    [out:json][timeout:25];
+    [out:json][timeout:30];
     (
-      node["land_use"="retail"](around:{radius},{lat},{lon});
-      way["land_use"="retail"](around:{radius},{lat},{lon});
-      node["amenity"="marketplace"](around:{radius},{lat},{lon});
-      way["amenity"="marketplace"](around:{radius},{lat},{lon});
-      node["shop"="mall"](around:{radius},{lat},{lon});
+      node["amenity"~"marketplace|trading|fair"](around:{radius},{lat},{lon});
+      way["amenity"~"marketplace|trading|fair"](around:{radius},{lat},{lon});
+      node["landuse"~"retail|commercial"](around:{radius},{lat},{lon});
+      way["landuse"~"retail|commercial"](around:{radius},{lat},{lon});
+      node["shop"~"supermarket|mall|department_store"](around:{radius},{lat},{lon});
+      way["shop"~"supermarket|mall|department_store"](around:{radius},{lat},{lon});
     );
     out center;
     """
     
     try:
-        headers = {"Content-Type": "text/plain"}
-        response = requests.post(overpass_url, data=overpass_query, headers=headers, timeout=30)
-        print(f"OSM Markets Response: {response.status_code}")
-        data = response.json()
+        data = query_overpass(overpass_query, timeout=30)
+        if not data:
+            return {"error": "Overpass API unavailable", "markets": [], "count": 0}
         
         markets = []
         for element in data.get("elements", []):
-            name = element.get("tags", {}).get("name", "Local Market")
+            tags = element.get("tags", {})
+            name = tags.get("name", "Local Market")
+            
             lat_val = element.get("lat") or element.get("center", {}).get("lat")
             lon_val = element.get("lon") or element.get("center", {}).get("lon")
             
@@ -133,16 +152,19 @@ def get_nearby_markets(
                 a = math.sin(dlat/2)**2 + math.cos(math.radians(lat)) * math.cos(math.radians(lat_val)) * math.sin(dlon/2)**2
                 distance = round(R * 2 * math.asin(math.sqrt(a)), 1)
                 
+                # Determine market type
+                market_type = tags.get("amenity", tags.get("landuse", tags.get("shop", "Market")))
+                
                 markets.append({
                     "id": element.get("id"),
                     "name": name,
                     "distance": f"{distance} km",
                     "lat": lat_val,
                     "lon": lon_val,
-                    "type": element.get("tags", {}).get("land_use", "Market"),
+                    "type": market_type.replace("_", " ").title(),
                 })
         
-        markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:10]
+        markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
         
         return {"markets": markets, "count": len(markets)}
         
