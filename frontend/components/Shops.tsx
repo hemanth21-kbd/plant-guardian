@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import ShopMap from './ShopMap';
+import { MAPBOX_TOKEN } from '../config';
 
 interface Shop {
     id: number;
@@ -11,6 +12,7 @@ interface Shop {
     lat: number;
     lon: number;
     address: string;
+    type?: string;
 }
 
 const MOCK_FERTILIZERS = [
@@ -28,6 +30,7 @@ export default function Shops() {
     const [searchTerm, setSearchTerm] = useState('');
     const [livePrice, setLivePrice] = useState<any>(null);
     const [loadingPrice, setLoadingPrice] = useState(false);
+    const [mapProvider, setMapProvider] = useState<'osm' | 'mapbox'>('osm');
 
     useEffect(() => {
         getUserLocation();
@@ -194,9 +197,42 @@ export default function Shops() {
 
                 {activeTab === 'map' && (
                     <div className="space-y-4 animate-fade-in">
+                        {/* Map Provider Selector */}
+                        <div className="bg-white rounded-xl border border-sky-100 p-3 shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-bold text-slate-700">Map Provider</span>
+                                <div className="flex bg-slate-100 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setMapProvider('osm')}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mapProvider === 'osm' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        OpenStreetMap
+                                    </button>
+                                    <button
+                                        onClick={() => setMapProvider('mapbox')}
+                                        disabled={!MAPBOX_TOKEN}
+                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${mapProvider === 'mapbox' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'} ${!MAPBOX_TOKEN ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        Mapbox
+                                        {!MAPBOX_TOKEN && <span className="ml-1 text-[10px] text-amber-600">🔒</span>}
+                                    </button>
+                                </div>
+                            </div>
+                            {mapProvider === 'mapbox' && !MAPBOX_TOKEN && (
+                                <p className="text-xs text-amber-600">
+                                    ⚠️ Mapbox token not configured. Add MAPBOX_TOKEN to .env file.
+                                </p>
+                            )}
+                            {mapProvider === 'mapbox' && MAPBOX_TOKEN && (
+                                <p className="text-xs text-emerald-600">
+                                    ✓ Using Mapbox (high-quality tiles & smooth zoom)
+                                </p>
+                            )}
+                        </div>
+
                         <div className="w-full h-[300px] sm:h-[350px] rounded-2xl border border-sky-200 shadow-sm overflow-hidden">
                             {location && shops.length > 0 ? (
-                                <ShopMap shops={shops} userLocation={location} />
+                                <ShopMap shops={shops} userLocation={location} mapProvider={mapProvider} mapboxToken={MAPBOX_TOKEN} />
                             ) : (
                                 <div className="w-full h-full flex flex-col items-center justify-center bg-sky-50 text-slate-500">
                                     <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center mb-2">
