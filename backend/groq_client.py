@@ -1,9 +1,50 @@
+import requests
 from PIL import Image
 
 def analyze_plant_disease(image_path):
-    """Main Analysis Function - Local image analysis for plant disease."""
-    print(f"Starting Local Analysis for {image_path}...")
+    """Main Analysis Function - Try Plant.id API first, then local analysis."""
+    print(f"Starting Analysis for {image_path}...")
+    
+    # Try Plant.id API (free plant disease detection)
+    result = try_plant_id_api(image_path)
+    if result:
+        return result
+    
+    # Fallback to local analysis
+    print("Plant.id failed. Using local analysis...")
     return local_plant_analysis(image_path)
+
+def try_plant_id_api(image_path):
+    """Use Plant.id free plant disease API."""
+    try:
+        with open(image_path, 'rb') as f:
+            files = {'images': f}
+            data = {'latitude': 'auto', 'longitude': 'auto'}
+            response = requests.post(
+                'https://plant.id/api/identify',
+                files=files,
+                data=data,
+                timeout=30
+            )
+        
+        if response.status_code == 200:
+            result = response.json()
+            suggestions = result.get('suggestions', [])
+            if suggestions:
+                s = suggestions[0]
+                return {
+                    "plant_name": s.get("plant_name", "Unknown"),
+                    "disease_name": s.get("plant_disease", "Healthy"),
+                    "confidence": s.get("probability", 0.8),
+                    "details": {
+                        "description": s.get("description", "Analysis complete"),
+                        "prevention": "Ensure proper care",
+                        "treatment": "Consult expert if needed"
+                    }
+                }
+    except Exception as e:
+        print(f"Plant.id error: {e}")
+    return None
 
 def local_plant_analysis(image_path):
     """Analyze plant health using image color analysis without numpy."""
