@@ -35,10 +35,34 @@ export default function Shops() {
     }, []);
 
     const getUserLocation = async () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLoc = { 
+                        lat: position.coords.latitude, 
+                        lon: position.coords.longitude 
+                    };
+                    console.log("Using browser GPS location:", userLoc);
+                    setLocation(userLoc);
+                    fetchNearbyShops(userLoc.lat, userLoc.lon);
+                },
+                async (error) => {
+                    console.log("GPS denied, falling back to IP geolocation");
+                    await fallbackToIpLocation();
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+            );
+        } else {
+            await fallbackToIpLocation();
+        }
+    };
+
+    const fallbackToIpLocation = async () => {
         try {
             const ipRes = await fetch('https://get.geojs.io/v1/ip/geo.json');
             const ipData = await ipRes.json();
             const userLoc = { lat: ipData.latitude, lon: ipData.longitude };
+            console.log("Using IP geolocation:", userLoc);
             setLocation(userLoc);
             fetchNearbyShops(userLoc.lat, userLoc.lon);
         } catch (error) {
@@ -119,7 +143,7 @@ export default function Shops() {
                                 </svg>
                             </div>
                             <span className="relative z-10 font-bold text-slate-700 bg-white/80 px-4 py-1.5 rounded-full text-sm backdrop-blur-sm shadow-sm border border-white">
-                                {loadingShops ? "Finding shops..." : location ? "Real shops near you" : "Location required"}
+                                {loadingShops ? "Finding shops..." : location ? "Your location" : "Location required"}
                             </span>
                         </div>
 
@@ -150,8 +174,8 @@ export default function Shops() {
 
                                         <div className="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                                             <div className="flex items-center gap-1.5">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                <span className="text-xs font-bold text-emerald-700">Open Now</span>
+                                                <div className="w-2 h-2 rounded-full bg-slate-400"></div>
+                                                <span className="text-xs font-bold text-slate-500">Check Hours</span>
                                             </div>
                                             <button
                                                 onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lon}`, '_blank')}

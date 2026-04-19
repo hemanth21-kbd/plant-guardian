@@ -11,13 +11,21 @@ API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv(
 HF_API_KEY = os.getenv("HF_API_KEY")
 
 def analyze_plant_disease(image_path):
-    """Main Analysis Function using Groq."""
+    """Main Analysis Function - Try Google Gemini first for fast analysis."""
     print(f"Starting Analysis for {image_path}...")
     
+    # Try Google Gemini Vision API first (faster, reliable)
+    result = try_google_gemini_vision(image_path)
+    if result:
+        return result
+
+    # Fallback to Groq Vision
+    print("Google Gemini failed. Trying Groq...")
     result = try_groq_vision(image_path)
     if result:
         return result
 
+    # Fallback to Hugging Face
     print("Groq failed. Trying Hugging Face...")
     result = try_hugging_face(image_path)
     if result:
@@ -28,6 +36,92 @@ def analyze_plant_disease(image_path):
 
 def get_mock_result():
     raise Exception("AI service unavailable. Please configure GROQ_API_KEY in environment variables.")
+
+def try_google_gemini_vision(image_path):
+    """Use Google Gemini Vision API for fast plant analysis."""
+    google_key = os.getenv("GOOGLE_API_KEY")
+    if not google_key:
+        print("No Google API key")
+        return None
+    
+    try:
+        import mimetypes
+        with open(image_path, "rb") as f:
+            image_data = base64.b64encode(f.read()).decode('utf-8')
+        
+        mime_type, _ = mimetypes.guess_type(image_path)
+        if not mime_type:
+            mime_type = "image/jpeg"
+        
+        # Use Google Gemini Pro Vision API
+        api_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={google_key}"
+        
+        prompt = """Analyze this plant image and return ONLY valid JSON with these exact keys:
+{
+  "plant_name": "name of the plant",
+  "disease_name": "name of disease or Healthy",
+  "confidence": 0.0-1.0,
+  "details": {
+    "description": "brief description",
+    "prevention": "prevention tips",
+    "treatment": "treatment suggestions"
+  }
+}"""
+        
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": mime_type, "data": image_data}}
+                ]
+            }],
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 1024,
+                "responseSchema": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "plant_name": {"type": "STRING"},
+                        "disease_name": {"type": "STRING"},
+                        "confidence": {"type": "NUMBER"},
+                        "details": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "description": {"type": "STRING"},
+                                "prevention": {"type": "STRING"},
+                                "treatment": {"type": "STRING"}
+                            }
+                        }
+                    },
+                    "required": ["plant_name", "disease_name", "confidence", "details"]
+                }
+            }
+        }
+        
+        response = requests.post(api_url, json=payload, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            text = result.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+            print(f"Gemini Result: {text[:200]}...")
+            
+            # Extract JSON from response
+            try:
+                # Try to parse as JSON directly
+                return json.loads(text)
+            except:
+                # Try to extract JSON from markdown code block
+                import re
+                match = re.search(r'\{.*\}', text, re.DOTALL)
+                if match:
+                    return json.loads(match.group())
+                    
+        print(f"Gemini API Error: {response.status_code} - {response.text}")
+        return None
+        
+    except Exception as e:
+        print(f"Gemini Exception: {e}")
+        return None
 
 def try_groq_vision(image_path):
     """Use Groq with vision-enabled model for plant analysis."""
