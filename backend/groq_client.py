@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+API_KEY = GROQ_API_KEY or GOOGLE_API_KEY
 HF_API_KEY = os.getenv("HF_API_KEY")
 
 def analyze_plant_disease(image_path):
@@ -151,7 +153,7 @@ def try_groq_vision(image_path):
 Return ONLY valid JSON, no extra text."""
 
         response = client.chat.completions.create(
-            model="llama-3.2-90b-vision-preview",
+            model="llama-3.2-11b-vision-preview",
             messages=[
                 {
                     "role": "user",
