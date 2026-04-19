@@ -96,20 +96,34 @@ def predict_disease(
                     "treatment": "Provide general care."
                 }
                 
-        # Map Gemini result to response schema
+        # Map Gemini result to response schema - handle null values
+        plant_name = gemini_result.get("plant_name") or "Unknown Plant"
+        disease_name = gemini_result.get("disease_name") or "Analysis Required"
+        confidence = float(gemini_result.get("confidence") or 0.5)
+        
+        # Ensure we have valid details
+        if isinstance(details_data, dict):
+            description = details_data.get("description") or "Unable to analyze image"
+            prevention = details_data.get("prevention") or "Provide good lighting"
+            treatment = details_data.get("treatment") or "Try again with clearer image"
+        else:
+            description = "Could not complete analysis"
+            prevention = "Ensure proper lighting"
+            treatment = "Please try again"
+        
         final_result = schemas.PredictionResult(
-            plant_name=gemini_result.get("plant_name", "Unknown"),
-            disease_name=gemini_result.get("disease_name", "Healthy"),
-            confidence=float(gemini_result.get("confidence", 0.9)),
+            plant_name=plant_name,
+            disease_name=disease_name,
+            confidence=confidence,
             details=schemas.DiseaseBase(
-                name=gemini_result.get("disease_name", "Healthy"),
+                name=disease_name,
                 severity="Moderate",
-                symptoms=details_data.get("description", "No symptoms found.") if isinstance(details_data, dict) else "No symptoms found.",
-                prevention=details_data.get("prevention", "No prevention info.") if isinstance(details_data, dict) else "No prevention info.",
+                symptoms=description,
+                prevention=prevention,
                 treatments=[
                     schemas.TreatmentBase(
                         type="General",
-                        description=details_data.get("treatment", "No treatment info.") if isinstance(details_data, dict) else "No treatment info.",
+                        description=treatment,
                         cost_approx="Varies"
                     )
                 ]
