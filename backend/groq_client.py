@@ -13,28 +13,22 @@ API_KEY = GROQ_API_KEY or GOOGLE_API_KEY
 HF_API_KEY = os.getenv("HF_API_KEY")
 
 def analyze_plant_disease(image_path):
-    """Main Analysis Function - Try Google Gemini first for fast analysis."""
+    """Main Analysis Function - Use Google Gemini Vision only (reliable)."""
     print(f"Starting Analysis for {image_path}...")
     
-    # Try Google Gemini Vision API first (faster, reliable)
+    # Try Google Gemini Vision API
     result = try_google_gemini_vision(image_path)
-    if result:
-        return result
-
-    # Fallback to Groq Vision
-    print("Google Gemini failed. Trying Groq...")
-    result = try_groq_vision(image_path)
-    if result:
+    if result and result.get("disease_name"):
         return result
 
     # Fallback to Hugging Face
-    print("Groq failed. Trying Hugging Face...")
+    print("Google Gemini failed. Trying Hugging Face...")
     result = try_hugging_face(image_path)
     if result:
         return result
 
     # Return error instead of mock data
-    raise Exception("AI services unavailable. Please check API key configuration.")
+    raise Exception("AI services unavailable. Please check GOOGLE_API_KEY in Render environment variables.")
 
 def get_mock_result():
     raise Exception("AI service unavailable. Please configure GROQ_API_KEY in environment variables.")
