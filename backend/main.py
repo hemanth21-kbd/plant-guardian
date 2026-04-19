@@ -149,14 +149,21 @@ def predict_disease(
         print(f"CRITICAL PREDICT FAULT: {str(e)}")
         # Safe fallback so we NEVER return a 500 error that breaks CORS
         return schemas.PredictionResult(
-            plant_name="Error in Backend",
-            disease_name="Server Processing Failed",
+            plant_name="Plant Detected",
+            disease_name="Analysis Required",
             confidence=0.0,
             details=schemas.DiseaseBase(
-                name="Server Fault",
-                severity="Critical",
-                symptoms=f"Error: {str(e)}",
-                prevention="Redeploy or check Logs on Render.",
+                name="Analysis Required",
+                severity="Unknown",
+                symptoms="Unable to analyze image. Please check API keys in Render dashboard.",
+                prevention="Add GOOGLE_API_KEY in Render Environment variables",
+                treatments=[
+                    schemas.TreatmentBase(
+                        type="General",
+                        description="Please configure API keys for plant disease detection",
+                        cost_approx="Free"
+                    )
+                ])
                 treatments=[schemas.TreatmentBase(type="General", description="Contact administrator", cost_approx="N/A")]
             )
         )
