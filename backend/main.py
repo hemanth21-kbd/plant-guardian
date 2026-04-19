@@ -163,8 +163,7 @@ def predict_disease(
                         description="Please configure API keys for plant disease detection",
                         cost_approx="Free"
                     )
-                ])
-                treatments=[schemas.TreatmentBase(type="General", description="Contact administrator", cost_approx="N/A")]
+                ]
             )
         )
     finally:
