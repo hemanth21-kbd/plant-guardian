@@ -1,5 +1,3 @@
-import os
-import numpy as np
 from PIL import Image
 
 def analyze_plant_disease(image_path):
@@ -8,31 +6,35 @@ def analyze_plant_disease(image_path):
     return local_plant_analysis(image_path)
 
 def local_plant_analysis(image_path):
-    """Analyze plant health using image color analysis."""
+    """Analyze plant health using image color analysis without numpy."""
     try:
         img = Image.open(image_path).convert('RGB')
-        img = img.resize((150, 150))
-        pixels = np.array(img)
+        img = img.resize((100, 100))
+        pixels = list(img.getdata())
         
-        # Calculate color statistics
-        r_mean = pixels[:,:,0].mean()
-        g_mean = pixels[:,:,1].mean()
-        b_mean = pixels[:,:,2].mean()
+        r_sum = g_sum = b_sum = 0
+        brown_count = 0
+        total_pixels = len(pixels)
         
-        # Calculate green ratio
+        for r, g, b in pixels:
+            r_sum += r
+            g_sum += g
+            b_sum += b
+            
+            if r > 120 and 80 < g < 150 and b < 100:
+                brown_count += 1
+        
+        r_mean = r_sum / total_pixels
+        g_mean = g_sum / total_pixels
+        b_mean = b_sum / total_pixels
+        
         total = r_mean + g_mean + b_mean
         green_ratio = g_mean / total if total > 0 else 0
-        
-        # Calculate yellowness (high R+G, low B)
         yellowness = (r_mean + g_mean) / (2 * b_mean) if b_mean > 0 else 1
-        
-        # Calculate brown spots (high R, medium G, low B)
-        brown_mask = (pixels[:,:,0] > 120) & (pixels[:,:,1] > 80) & (pixels[:,:,1] < 150) & (pixels[:,:,2] < 100)
-        brown_ratio = brown_mask.sum() / pixels[:,:,0].size
+        brown_ratio = brown_count / total_pixels
         
         print(f"Green ratio: {green_ratio:.2f}, Yellowness: {yellowness:.2f}, Brown spots: {brown_ratio:.2f}")
         
-        # Determine disease based on color analysis
         if green_ratio > 0.42 and brown_ratio < 0.1:
             return {
                 "plant_name": "Healthy Plant",
