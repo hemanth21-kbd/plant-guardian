@@ -1,158 +1,196 @@
+import os
+import json
+import base64
 import requests
+import google.generativeai as genai
 from PIL import Image
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# API Keys
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+PLANT_ID_API_KEY = os.getenv("PLANT_ID_API_KEY")
+
+# Configure Gemini
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 def analyze_plant_disease(image_path):
-    """Main Analysis Function - Try Plant.id API first, then local analysis."""
+    """
+    Main Analysis Entry Point.
+    Checks for Plant.id (dedicated API) first, then Gemini (general AI),
+    finally falls back to local threshold analysis.
+    """
     print(f"Starting Analysis for {image_path}...")
     
-    # Try Plant.id API (free plant disease detection)
-    result = try_plant_id_api(image_path)
-    if result:
-        return result
+    # 1. Try Plant.id (Dedicated Plant Disease API) - High Accuracy
+    if PLANT_ID_API_KEY:
+        print("Using Plant.id API...")
+        plant_id_result = try_plant_id_api(image_path)
+        if plant_id_result:
+            return plant_id_result
     
-    # Fallback to local analysis
-    print("Plant.id failed. Using local analysis...")
+    # 2. Try Google Gemini (Vision AI) - High Accuracy
+    if GOOGLE_API_KEY:
+        print("Using Google Gemini API...")
+        gemini_result = try_gemini_analysis(image_path)
+        if gemini_result:
+            return gemini_result
+            
+    # 3. Final Fallback: Local Pixel Analysis - Low Accuracy
+    print("Warning: No valid API keys found. Falling back to primitive local analysis.")
     return local_plant_analysis(image_path)
 
 def try_plant_id_api(image_path):
-    """Use Plant.id free plant disease API."""
+    """Implementation for Kindwise Plant.id (Nature.id) API v3."""
     try:
-        with open(image_path, 'rb') as f:
-            files = {'images': f}
-            data = {'latitude': 'auto', 'longitude': 'auto'}
-            response = requests.post(
-                'https://plant.id/api/identify',
-                files=files,
-                data=data,
-                timeout=30
-            )
+        with open(image_path, "rb") as f:
+            image_data = base64.b64encode(f.read()).decode("utf-8")
         
-        if response.status_code == 200:
-            result = response.json()
-            suggestions = result.get('suggestions', [])
-            if suggestions:
-                s = suggestions[0]
-                return {
-                    "plant_name": s.get("plant_name", "Unknown"),
-                    "disease_name": s.get("plant_disease", "Healthy"),
-                    "confidence": s.get("probability", 0.8),
-                    "details": {
-                        "description": s.get("description", "Analysis complete"),
-                        "prevention": "Ensure proper care",
-                        "treatment": "Consult expert if needed"
-                    }
+        url = "https://plant.id/api/v3/identification"
+        headers = {
+            "Content-Type": "application/json",
+            "Api-Key": PLANT_ID_API_KEY
+        }
+        payload = {
+            "images": [image_data],
+            "latitude": 0,
+            "longitude": 0,
+            "similar_images": True,
+            "health": "all"
+        }
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=20)
+        if response.status_code == 201:
+            data = response.json()
+            # Extract identification results
+            result = data.get("result", {})
+            classification = result.get("classification", {})
+            suggestions = classification.get("suggestions", [])
+            
+            if not suggestions:
+                return None
+                
+            best_match = suggestions[0]
+            
+            # Extract health results
+            health = result.get("is_healthy", {})
+            disease_info = result.get("disease", {})
+            disease_suggestions = disease_info.get("suggestions", [])
+            
+            is_healthy = health.get("binary", True)
+            disease_name = "Healthy"
+            if not is_healthy and disease_suggestions:
+                disease_name = disease_suggestions[0].get("name", "Unknown Disease")
+                
+            return {
+                "plant_name": best_match.get("name", "Unknown Plant"),
+                "disease_name": disease_name,
+                "confidence": best_match.get("probability", 0.9),
+                "details": {
+                    "description": f"Overall health: {'Good' if is_healthy else 'Requires Attention'}.",
+                    "prevention": "Ensure proper watering and sunlight.",
+                    "treatment": "Consult a local nursery for plant-specific care."
                 }
+            }
     except Exception as e:
         print(f"Plant.id error: {e}")
     return None
 
+def try_gemini_analysis(image_path):
+    """Implementation for Gemini 1.5 Flash Vision."""
+    try:
+        img = Image.open(image_path)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = (
+            "Analyze this plant photo. Return ONLY a JSON object: "
+            "{\"plant_name\": \"...\", \"disease_name\": \"... or Healthy\", "
+            "\"confidence\": 0.95, \"details\": {\"description\": \"...\", "
+            "\"prevention\": \"...\", \"treatment\": \"...\"}}"
+        )
+        
+        response = model.generate_content([prompt, img])
+        res_text = response.text.strip()
+        
+        # Parse JSON from markdown or raw text
+        if "```json" in res_text:
+            res_text = res_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in res_text:
+            res_text = res_text.split("```")[1].split("```")[0].strip()
+            
+        return json.loads(res_text)
+    except Exception as e:
+        if "leaked" in str(e).lower() or "403" in str(e):
+            print("ERROR: GOOGLE_API_KEY is reported as leaked. Please update it in .env.")
+        else:
+            print(f"Gemini error: {e}")
+    return None
+
 def local_plant_analysis(image_path):
-    """Analyze plant health using image color analysis without numpy."""
+    """Primitive fallback logic if no external API is available."""
     try:
         img = Image.open(image_path).convert('RGB')
         img = img.resize((100, 100))
         pixels = list(img.getdata())
         
-        r_sum = g_sum = b_sum = 0
-        brown_count = 0
-        total_pixels = len(pixels)
+        g_sum = sum(p[1] for p in pixels)
+        total = sum(sum(p) for p in pixels)
+        green_ratio = g_sum / total if total > 0 else 0
         
-        for r, g, b in pixels:
-            r_sum += r
-            g_sum += g
-            b_sum += b
-            
-            if r > 120 and 80 < g < 150 and b < 100:
-                brown_count += 1
-        
-        r_mean = r_sum / total_pixels
-        g_mean = g_sum / total_pixels
-        b_mean = b_sum / total_pixels
-        
-        total = r_mean + g_mean + b_mean
-        green_ratio = g_mean / total if total > 0 else 0
-        yellowness = (r_mean + g_mean) / (2 * b_mean) if b_mean > 0 else 1
-        brown_ratio = brown_count / total_pixels
-        
-        print(f"Green ratio: {green_ratio:.2f}, Yellowness: {yellowness:.2f}, Brown spots: {brown_ratio:.2f}")
-        
-        if green_ratio > 0.42 and brown_ratio < 0.1:
+        if green_ratio > 0.4:
             return {
                 "plant_name": "Healthy Plant",
                 "disease_name": "Healthy",
-                "confidence": 0.85,
-                "details": {
-                    "description": "Plant appears healthy with good green coloration.",
-                    "prevention": "Continue current watering and sunlight routine.",
-                    "treatment": "No treatment needed. Maintain current care."
-                }
-            }
-        elif brown_ratio > 0.2:
-            return {
-                "plant_name": "Affected Plant",
-                "disease_name": "Possibly Fungal Infection",
-                "confidence": 0.7,
-                "details": {
-                    "description": "Brown spots detected. May indicate fungal disease or rotting.",
-                    "prevention": "Improve air circulation, reduce watering.",
-                    "treatment": "Apply fungicide. Remove affected leaves."
-                }
-            }
-        elif yellowness > 1.5:
-            return {
-                "plant_name": "Yellowing Plant",
-                "disease_name": "Nitrogen Deficiency",
-                "confidence": 0.75,
-                "details": {
-                    "description": "Plant appears yellow. Likely nitrogen deficiency.",
-                    "prevention": "Apply nitrogen-rich fertilizer.",
-                    "treatment": "Give urea or compost fertilizer."
-                }
-            }
-        elif green_ratio < 0.35:
-            return {
-                "plant_name": "Stressed Plant",
-                "disease_name": "Environmental Stress",
-                "confidence": 0.6,
-                "details": {
-                    "description": "Plant shows signs of stress.",
-                    "prevention": "Ensure proper watering and light.",
-                    "treatment": "Check soil moisture and light conditions."
-                }
+                "confidence": 0.5,
+                "details": {"description": "Looks green.", "prevention": "Continue care.", "treatment": "None."}
             }
         else:
             return {
-                "plant_name": "Monitor Plant",
-                "disease_name": "Needs Monitoring",
-                "confidence": 0.5,
-                "details": {
-                    "description": "Unable to determine. Please consult expert.",
-                    "prevention": "Regular monitoring recommended.",
-                    "treatment": "Take another photo in better lighting."
-                }
+                "plant_name": "Stressed Plant",
+                "disease_name": "Requires Investigation",
+                "confidence": 0.4,
+                "details": {"description": "Low green levels.", "prevention": "Check lighting.", "treatment": "Take a better photo."}
             }
-            
-    except Exception as e:
-        print(f"Analysis error: {e}")
-        return {
-            "plant_name": "Analysis Error",
-            "disease_name": "Unable to Analyze",
-            "confidence": 0.0,
-            "details": {
-                "description": f"Error: {str(e)}",
-                "prevention": "Try again with clearer image.",
-                "treatment": "Restart analysis."
-            }
-        }
-
-def ask_groq(query):
-    return "Chat disabled. Use disease scanner for diagnosis."
+    except:
+        return {"plant_name": "Unknown", "disease_name": "Error", "confidence": 0.0, "details": {}}
 
 def stream_groq(query):
-    yield "Chat disabled."
+    """Use Gemini for chat assistant if available."""
+    if not GOOGLE_API_KEY:
+        yield "API key not configured."
+        return
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(query, stream=True)
+        for chunk in response:
+            if chunk.text:
+                yield chunk.text
+    except Exception as e:
+        yield f"AI Assistant Error: {str(e)}"
 
 def translate_text(text, target_language):
-    return text
+    """Use Gemini for translation."""
+    if not GOOGLE_API_KEY or target_language == "en":
+        return text
+
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"Translate the following JSON data to {target_language}. Maintain the exact JSON structure and only translate the values: {text}"
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except:
+        return text
 
 def get_disease_info(plant_name, disease_name):
-    return None
+    """Retrieve detailed disease info via Gemini."""
+    if not GOOGLE_API_KEY: return None
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"Provide gardening details for {plant_name} with {disease_name}. Return in JSON format with description, prevention, and treatment."
+        response = model.generate_content(prompt)
+        return json.loads(response.text.strip())
+    except:
+        return None
