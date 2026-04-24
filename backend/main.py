@@ -16,9 +16,9 @@ from . import models, schemas, database, groq_client, places_service
 
 try:
     models.Base.metadata.create_all(bind=database.engine)
-    print("✅ Database initialized")
+    print("[OK] Database initialized")
 except Exception as e:
-    print(f"⚠️ Database not available: {e}")
+    print(f"[WARN] Database not available: {e}")
     print("Using fallback mode...")
 
 app = FastAPI(title="Plant Disease Detection API")
@@ -102,14 +102,43 @@ def predict_disease(
         confidence = float(gemini_result.get("confidence") or 0.5)
         
         # Ensure we have valid details
+        treatments_list = []
         if isinstance(details_data, dict):
-            description = details_data.get("description") or "Unable to analyze image"
+            description = details_data.get("symptoms") or details_data.get("description") or "Unable to analyze image"
             prevention = details_data.get("prevention") or "Provide good lighting"
-            treatment = details_data.get("treatment") or "Try again with clearer image"
+            severity = details_data.get("severity") or "Moderate"
+            
+            # Extract treatments list
+            raw_treatments = details_data.get("treatments")
+            if raw_treatments and isinstance(raw_treatments, list):
+                for t in raw_treatments:
+                    treatments_list.append(
+                        schemas.TreatmentBase(
+                            type=t.get("type", "General"),
+                            description=t.get("description", str(t)),
+                            cost_approx=t.get("cost_approx", "Varies")
+                        )
+                    )
+            else:
+                treatment = details_data.get("treatment") or "Try again with clearer image"
+                treatments_list = [
+                    schemas.TreatmentBase(
+                        type="General",
+                        description=treatment,
+                        cost_approx="Varies"
+                    )
+                ]
         else:
             description = "Could not complete analysis"
             prevention = "Ensure proper lighting"
-            treatment = "Please try again"
+            severity = "Moderate"
+            treatments_list = [
+                schemas.TreatmentBase(
+                    type="General",
+                    description="Please try again",
+                    cost_approx="Varies"
+                )
+            ]
         
         final_result = schemas.PredictionResult(
             plant_name=plant_name,
@@ -117,16 +146,10 @@ def predict_disease(
             confidence=confidence,
             details=schemas.DiseaseBase(
                 name=disease_name,
-                severity="Moderate",
+                severity=severity,
                 symptoms=description,
                 prevention=prevention,
-                treatments=[
-                    schemas.TreatmentBase(
-                        type="General",
-                        description=treatment,
-                        cost_approx="Varies"
-                    )
-                ]
+                treatments=treatments_list
             )
         )
 

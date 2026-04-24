@@ -99,33 +99,105 @@ def try_plant_id_api(image_path):
     return None
 
 def try_gemini_analysis(image_path):
-    """Implementation for Gemini 1.5 Flash Vision."""
+    """Implementation for Gemini 1.5/2.5 Flash Vision."""
     try:
-        img = Image.open(image_path)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        uploaded_file = genai.upload_file(image_path)
         
-        prompt = (
-            "Analyze this plant photo. Return ONLY a JSON object: "
-            "{\"plant_name\": \"...\", \"disease_name\": \"... or Healthy\", "
-            "\"confidence\": 0.95, \"details\": {\"description\": \"...\", "
-            "\"prevention\": \"...\", \"treatment\": \"...\"}}"
-        )
+        prompt = """
+You are an expert botanist and plant pathologist. Carefully analyze the provided plant photo.
+1. Accurately identify the plant species.
+2. Identify any visible diseases, pests, fungal infections, or nutrient deficiencies accurately. 
+3. If the plant is perfectly healthy, set disease_name to "Healthy".
+4. Provide practical, high-value advice for treatments.
+You MUST respond with valid JSON only, in EXACTLY the following structure:
+{
+  "plant_name": "Name of the plant",
+  "disease_name": "Specific disease/pest name (or 'Healthy')",
+  "confidence": 0.95,
+  "details": {
+    "severity": "High/Medium/Low/None",
+    "symptoms": "Detailed description of what is visibly affecting the plant",
+    "treatments": [
+      {
+        "type": "Organic/Chemical/General",
+        "description": "Specific treatment steps and recommendations",
+        "cost_approx": "$10"
+      }
+    ],
+    "prevention": "How to prevent this in the future",
+    "fertilizers": [
+      {
+        "name": "NPK 10-10-10 or specific product",
+        "description": "Why this fertilizer helps",
+        "when": "Frequency"
+      }
+    ]
+  }
+}
+"""
         
-        response = model.generate_content([prompt, img])
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            response = model.generate_content(
+                [prompt, uploaded_file],
+                generation_config={"response_mime_type": "application/json"}
+            )
+        except Exception as e:
+            print(f"Fallback to gemini-2.0-flash because: {e}")
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            response = model.generate_content(
+                [prompt, uploaded_file],
+                generation_config={"response_mime_type": "application/json"}
+            )
+            
         res_text = response.text.strip()
         
-        # Parse JSON from markdown or raw text
+        if not res_text:
+            print("Gemini returned empty response")
+            return None
+        
+        # Parse JSON from markdown or raw text just in case the model ignores mime type
         if "```json" in res_text:
             res_text = res_text.split("```json")[1].split("```")[0].strip()
         elif "```" in res_text:
             res_text = res_text.split("```")[1].split("```")[0].strip()
+        
+        # Try to extract JSON from response
+        try:
+            result = json.loads(res_text)
             
-        return json.loads(res_text)
+            # Transform response to match frontend format
+            if result and 'details' in result:
+                details = result['details']
+                
+                # Convert treatment to treatments array if missing
+                if 'treatment' in details and 'treatments' not in details:
+                    treatment = details.pop('treatment')
+                    if treatment:
+                        details['treatments'] = [
+                            {"type": "General", "description": treatment, "cost_approx": "Varies"}
+                        ]
+                
+                # Ensure required fields exist
+                if 'severity' not in details:
+                    details['severity'] = "Medium"
+                if 'symptoms' not in details:
+                    details['symptoms'] = details.get('description', 'No symptoms recorded')
+                    
+            return result
+        except json.JSONDecodeError:
+            import re
+            match = re.search(r'\{.*\}', res_text, re.DOTALL)
+            if match:
+                return json.loads(match.group())
+            print(f"Failed to parse response: {res_text[:200]}")
+            return None
     except Exception as e:
-        if "leaked" in str(e).lower() or "403" in str(e):
+        error_msg = str(e)
+        if "leaked" in error_msg.lower() or "403" in error_msg:
             print("ERROR: GOOGLE_API_KEY is reported as leaked. Please update it in .env.")
         else:
-            print(f"Gemini error: {e}")
+            print(f"Gemini error: {error_msg}")
     return None
 
 def local_plant_analysis(image_path):
@@ -163,7 +235,7 @@ def stream_groq(query):
         return
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(query, stream=True)
         for chunk in response:
             if chunk.text:
@@ -177,7 +249,7 @@ def translate_text(text, target_language):
         return text
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         prompt = f"Translate the following JSON data to {target_language}. Maintain the exact JSON structure and only translate the values: {text}"
         response = model.generate_content(prompt)
         return response.text.strip()
@@ -188,7 +260,7 @@ def get_disease_info(plant_name, disease_name):
     """Retrieve detailed disease info via Gemini."""
     if not GOOGLE_API_KEY: return None
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         prompt = f"Provide gardening details for {plant_name} with {disease_name}. Return in JSON format with description, prevention, and treatment."
         response = model.generate_content(prompt)
         return json.loads(response.text.strip())
