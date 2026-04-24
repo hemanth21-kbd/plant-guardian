@@ -99,19 +99,19 @@ def try_plant_id_api(image_path):
     return None
 
 def try_gemini_analysis(image_path):
-    """Implementation for Gemini 1.5/2.5 Flash Vision."""
+    """Implementation for Gemini Pro/Flash Vision."""
     try:
         uploaded_file = genai.upload_file(image_path)
         
         prompt = """
-You are an expert botanist and plant pathologist. Carefully analyze the provided plant photo.
-1. Accurately identify the plant species.
+You are an elite botanist and plant pathologist. Carefully analyze the provided plant photo.
+1. Accurately identify the plant species. Pay extremely close attention to leaf shape, edges, vein patterns, and overall morphology. Do NOT guess generic plants like 'Tomato' or 'Rose' unless you are certain. Give the common name (and scientific name if appropriate).
 2. Identify any visible diseases, pests, fungal infections, or nutrient deficiencies accurately. 
 3. If the plant is perfectly healthy, set disease_name to "Healthy".
 4. Provide practical, high-value advice for treatments.
 You MUST respond with valid JSON only, in EXACTLY the following structure:
 {
-  "plant_name": "Name of the plant",
+  "plant_name": "Name of the plant (e.g. 'Monstera deliciosa' or 'Unknown Fern')",
   "disease_name": "Specific disease/pest name (or 'Healthy')",
   "confidence": 0.95,
   "details": {
@@ -136,15 +136,16 @@ You MUST respond with valid JSON only, in EXACTLY the following structure:
 }
 """
         
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        # Try primary Pro model for highest accuracy
+        model = genai.GenerativeModel('gemini-2.5-pro')
         try:
             response = model.generate_content(
                 [prompt, uploaded_file],
                 generation_config={"response_mime_type": "application/json"}
             )
         except Exception as e:
-            print(f"Fallback to gemini-2.0-flash because: {e}")
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            print(f"Fallback to gemini-2.5-flash because: {e}")
+            model = genai.GenerativeModel('gemini-2.5-flash')
             response = model.generate_content(
                 [prompt, uploaded_file],
                 generation_config={"response_mime_type": "application/json"}
