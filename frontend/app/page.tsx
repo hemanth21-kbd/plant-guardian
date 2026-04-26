@@ -3,7 +3,6 @@ import React, { useState, useEffect, Suspense, lazy } from "react";
 import CameraFeed from "@/components/CameraFeed";
 import ImageUpload from "@/components/ImageUpload";
 import DiseaseInfo from "@/components/DiseaseInfo";
-import GoogleAssist from "@/components/GoogleAssist";
 import AILogo from "@/components/icons/AILogo";
 import DashboardUI from "@/components/DashboardUI";
 import PlantSelection from "@/components/PlantSelection";
@@ -40,7 +39,7 @@ export default function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"home" | "camera" | "upload" | "google" | "garden" | "community" | "market" | "shops" | "profile">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "camera" | "upload" | "garden" | "community" | "market" | "shops" | "profile">("home");
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -133,10 +132,7 @@ export default function Home() {
   } else if (activeTab === "shops") {
     tabContent = <Shops />;
   } else if (activeTab === "profile") {
-    tabContent = <Profile onSelectDiscussion={(query, answer) => {
-        localStorage.setItem('resumeDiscussion', JSON.stringify({query, answer}));
-        setActiveTab('google');
-    }} />;
+    tabContent = <Profile />;
   }
 
   return (

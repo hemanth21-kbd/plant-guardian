@@ -114,7 +114,9 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
     const fetchLogs = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/my-garden/logs/${plantId}`);
+            const res = await axios.get(`${API_BASE_URL}/my-garden/logs/${plantId}`, {
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
             // Sort by date desc
             const sorted = res.data.sort((a: GardenLog, b: GardenLog) =>
                 new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -147,6 +149,8 @@ export default function PlantHistoryModal({ plantId, plantName, onClose }: Plant
                 note,
                 status,
                 image_url: imageUrl
+            }, {
+                headers: { "Bypass-Tunnel-Reminder": "true" }
             });
             setNote('');
             setStatus('Healthy');

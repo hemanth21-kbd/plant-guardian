@@ -32,7 +32,7 @@ export default function Garden() {
         if (storedUser) {
             const userData = JSON.parse(storedUser);
             setUser(userData);
-            fetchPlants(userData.user_id);
+            fetchPlants(userData.user_id || userData.id);
         }
     }, []);
 
@@ -56,7 +56,7 @@ export default function Garden() {
 
         try {
             await axios.post(`${API_BASE_URL}/my-garden/add`, {
-                user_id: user.user_id,
+                user_id: user.user_id || user.id,
                 plant_name: newPlantName,
                 species: newPlantSpecies,
                 date_planted: newPlantDate,
@@ -68,7 +68,7 @@ export default function Garden() {
             setNewPlantName('');
             setNewPlantSpecies('');
             setNewPlantDate('');
-            fetchPlants(user.user_id);
+            fetchPlants(user.user_id || user.id);
         } catch (err) {
             console.error("Failed to add plant", err);
             alert("Failed to add plant.");

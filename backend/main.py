@@ -49,15 +49,7 @@ def get_db():
 def read_root():
     return {"message": "Plant Disease Detection API is running (TEST 2)"}
 
-class GoogleQuery(BaseModel):
-    query: str
 
-@app.post("/ask-google")
-async def ask_google(query: GoogleQuery):
-    return StreamingResponse(
-        groq_client.stream_groq(query.query),
-        media_type="text/event-stream"
-    )
 
 from fastapi import Form 
 
@@ -268,6 +260,21 @@ def verify_otp(data: schemas.OTPVerify, db: Session = Depends(get_db)):
 # My Garden Routes
 @app.post("/my-garden/add", response_model=schemas.UserPlantResponse)
 def add_to_garden(plant: schemas.UserPlantCreate, db: Session = Depends(get_db)):
+    # Check if user exists (to fix localstorage migration issues to Render)
+    user = db.query(models.User).filter(models.User.id == plant.user_id).first()
+    if not user:
+        new_user = models.User(
+            id=plant.user_id,
+            username=f"User{plant.user_id}",
+            email=f"user{plant.user_id}@migrated.com",
+            hashed_password="migrated_password"
+        )
+        db.add(new_user)
+        try:
+            db.commit()
+        except:
+            db.rollback()
+
     db_plant = models.UserPlant(**plant.model_dump())
     db.add(db_plant)
     db.commit()

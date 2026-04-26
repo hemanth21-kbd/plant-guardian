@@ -230,17 +230,29 @@ def local_plant_analysis(image_path):
         return {"plant_name": "Unknown", "disease_name": "Error", "confidence": 0.0, "details": {}}
 
 def stream_groq(query):
-    """Use Gemini for chat assistant if available."""
-    if not GOOGLE_API_KEY:
-        yield "API key not configured."
+    """Use Groq API for chat assistant."""
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        yield "Groq API key not configured."
         return
 
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        response = model.generate_content(query, stream=True)
-        for chunk in response:
-            if chunk.text:
-                yield chunk.text
+        from groq import Groq
+        client = Groq(api_key=groq_api_key)
+        
+        # We can use a fast model like llama3-8b-8192
+        completion = client.chat.completions.create(
+            model="llama3-8b-8192",
+            messages=[
+                {"role": "system", "content": "You are a helpful plant disease and gardening assistant. Provide concise, friendly answers."},
+                {"role": "user", "content": query}
+            ],
+            stream=True
+        )
+        
+        for chunk in completion:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
     except Exception as e:
         yield f"AI Assistant Error: {str(e)}"
 
@@ -250,7 +262,7 @@ def translate_text(text, target_language):
         return text
 
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"Translate the following JSON data to {target_language}. Maintain the exact JSON structure and only translate the values: {text}"
         response = model.generate_content(prompt)
         return response.text.strip()
@@ -261,7 +273,7 @@ def get_disease_info(plant_name, disease_name):
     """Retrieve detailed disease info via Gemini."""
     if not GOOGLE_API_KEY: return None
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         prompt = f"Provide gardening details for {plant_name} with {disease_name}. Return in JSON format with description, prevention, and treatment."
         response = model.generate_content(prompt)
         return json.loads(response.text.strip())

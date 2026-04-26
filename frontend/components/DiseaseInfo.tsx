@@ -13,6 +13,7 @@ interface DiseaseDetails {
     symptoms: string;
     prevention: string;
     treatments: Treatment[];
+    fertilizers?: { name: string; description: string; when: string }[];
 }
 
 interface PredictionResult {
@@ -144,6 +145,23 @@ const DiseaseInfo: React.FC<DiseaseInfoProps> = ({ result }) => {
                         <h3 className="font-bold text-green-800 mb-2">Prevention</h3>
                         <p className="text-green-700 text-sm">{result.details.prevention}</p>
                     </div>
+
+                    {result.details.fertilizers && result.details.fertilizers.length > 0 && (
+                        <div className="mt-4 p-4 bg-amber-50 rounded-lg">
+                            <h3 className="font-bold text-amber-800 mb-3">Recommended Fertilizers</h3>
+                            <div className="space-y-2">
+                                {result.details.fertilizers.map((fert, idx) => (
+                                    <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-lg border border-amber-100">
+                                        <div>
+                                            <span className="font-bold text-amber-700">{fert.name}</span>
+                                            <p className="text-sm text-amber-600">{fert.description}</p>
+                                        </div>
+                                        <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">{fert.when}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="p-4 bg-gray-100 rounded text-center text-gray-500">

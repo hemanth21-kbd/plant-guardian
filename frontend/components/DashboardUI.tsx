@@ -4,13 +4,12 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import AILogo from '@/components/icons/AILogo';
 import CameraFeed from '@/components/CameraFeed';
 import ImageUpload from '@/components/ImageUpload';
-import GoogleAssist from '@/components/GoogleAssist';
 import Garden from '@/components/Garden';
 import { languageOptions } from '@/utils/translations';
 import { useState, useEffect } from 'react';
 
 interface DashboardUIProps {
-    onTabChange: (tab: "home" | "camera" | "upload" | "google" | "garden" | "community" | "market" | "shops" | "profile") => void;
+    onTabChange: (tab: "home" | "camera" | "upload" | "garden" | "community" | "market" | "shops" | "profile") => void;
     onCameraTrigger: () => void;
     activeTab: string;
     userPlants?: string[];
@@ -97,13 +96,7 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => onTabChange('google')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors font-medium text-sm shadow-sm ${activeTab === 'google' ? 'bg-indigo-600 text-white shadow-indigo-200' : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'}`}
-                    >
-                        <AILogo className={`w-4 h-4 ${activeTab === 'google' ? 'text-white' : 'text-indigo-600'}`} />
-                        <span>Assistant</span>
-                    </button>
+
                     <button className="p-2 text-slate-600 hover:bg-slate-100 rounded-full" onClick={() => onTabChange('home')}>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -367,11 +360,7 @@ export default function DashboardUI({ onTabChange, onCameraTrigger, activeTab, u
                     </>
                 )}
 
-                {activeTab === 'google' && (
-                    <div className="px-6 h-full flex items-center pt-8">
-                        <GoogleAssist />
-                    </div>
-                )}
+
 
                 {activeTab === 'camera' && (
                     <div className="px-6 pb-20">

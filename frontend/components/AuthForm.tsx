@@ -32,7 +32,9 @@ export default function AuthForm({ onLoginSuccess }: AuthFormProps) {
                 password 
             };
 
-            const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload);
+            const res = await axios.post(`${API_BASE_URL}${endpoint}`, payload, {
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
 
             // Handle response data
             const userData = { ...res.data, user_id: res.data.id };
