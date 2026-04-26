@@ -102,6 +102,8 @@ def get_nearby_shops(
     (
       node["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
       way["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
+      node["shop"="hardware"]["name"~"agri|farm|kisan|krishi|fertilizer|pesticide|seed|tractor|agro", i](around:{radius},{lat},{lon});
+      way["shop"="hardware"]["name"~"agri|farm|kisan|krishi|fertilizer|pesticide|seed|tractor|agro", i](around:{radius},{lat},{lon});
     );
     out center;
     """
@@ -181,6 +183,8 @@ def get_nearby_markets(
     (
       node["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
       way["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
+      node["landuse"="retail"]["name"~"market|mandi|bazaar|trading|fair|sandhai", i](around:{radius},{lat},{lon});
+      way["landuse"="retail"]["name"~"market|mandi|bazaar|trading|fair|sandhai", i](around:{radius},{lat},{lon});
     );
     out center;
     """
