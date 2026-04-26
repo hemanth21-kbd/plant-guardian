@@ -91,14 +91,14 @@ def is_agricultural_shop(tags: dict, name: str) -> bool:
 def get_nearby_shops(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
-    radius: int = Query(30000, description="Search radius in meters")
+    radius: int = Query(150000, description="Search radius in meters")
 ):
     """
     Find nearby fertilizer/agriculture shops using OpenStreetMap.
     Only returns genuine agricultural input suppliers.
     """
     overpass_query = f"""
-    [out:json][timeout:30];
+    [out:json][timeout:60];
     (
       node["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
       way["shop"~"agrarian|agro|farm_supply|garden_centre|farm|agricultural|horticulture|nursery"](around:{radius},{lat},{lon});
@@ -109,7 +109,7 @@ def get_nearby_shops(
     """
     
     try:
-        data = query_overpass(overpass_query, timeout=30)
+        data = query_overpass(overpass_query, timeout=60)
         if not data:
             return {"error": "Overpass API unavailable", "shops": [], "count": 0}
         
@@ -155,8 +155,8 @@ def get_nearby_shops(
                     "type": tags.get("shop", "").replace("_", " ").title(),
                 })
         
-        # Sort by distance and limit to 15
-        shops = sorted(shops, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
+        # Sort by distance and limit to 50
+        shops = sorted(shops, key=lambda x: float(x["distance"].replace(" km", "")))[:50]
         
         print(f"Found {len(shops)} agricultural shops after filtering")
         for shop in shops[:5]:
@@ -172,14 +172,14 @@ def get_nearby_shops(
 def get_nearby_markets(
     lat: float = Query(..., description="Latitude"),
     lon: float = Query(..., description="Longitude"),
-    radius: int = Query(30000, description="Search radius in meters")
+    radius: int = Query(150000, description="Search radius in meters")
 ):
     """
     Find nearby markets using OpenStreetMap.
     Returns actual marketplaces and trading areas.
     """
     overpass_query = f"""
-    [out:json][timeout:30];
+    [out:json][timeout:60];
     (
       node["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
       way["amenity"~"marketplace|trading|fair|bazaar|market"](around:{radius},{lat},{lon});
@@ -190,7 +190,7 @@ def get_nearby_markets(
     """
     
     try:
-        data = query_overpass(overpass_query, timeout=30)
+        data = query_overpass(overpass_query, timeout=60)
         if not data:
             return {"error": "Overpass API unavailable", "markets": [], "count": 0}
         
@@ -238,7 +238,7 @@ def get_nearby_markets(
                     "type": market_type.replace("_", " ").title(),
                 })
         
-        markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:15]
+        markets = sorted(markets, key=lambda x: float(x["distance"].replace(" km", "")))[:50]
         
         print(f"Found {len(markets)} markets")
         for market in markets[:3]:

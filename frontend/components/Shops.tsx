@@ -74,7 +74,7 @@ export default function Shops() {
         setLoadingShops(true);
         try {
             const res = await axios.get(`${API_BASE_URL}/places/nearby-shops`, {
-                params: { lat, lon, radius: 30000 },
+                params: { lat, lon, radius: 150000 },
                 headers: { "Bypass-Tunnel-Reminder": "true" }
             });
             if (res.data.shops && res.data.shops.length > 0) {
@@ -148,7 +148,7 @@ export default function Shops() {
                         </div>
 
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="font-bold text-slate-800">Shops within 30 km</h3>
+                            <h3 className="font-bold text-slate-800">Shops within 150 km</h3>
                             <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
                                 {shops.length} Found
                             </span>
@@ -207,7 +207,7 @@ export default function Shops() {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.243ZM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                         </svg>
                                     </div>
-                                    <p className="text-slate-700 font-bold mb-1">No shops found within 30 km</p>
+                                    <p className="text-slate-700 font-bold mb-1">No shops found within 150 km</p>
                                     <p className="text-xs text-slate-500 max-w-xs mx-auto">
                                         Try a different location or check the Map View for nearby options.
                                     </p>
